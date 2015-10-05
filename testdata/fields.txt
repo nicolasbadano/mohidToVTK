@@ -1,0 +1,8 @@
+# Para WaterProperties, los campos tienen los siguientes paths
+#/Results/temperature/temperature
+#/Results/fecal coliforms/fecal coliforms
+#/Results/salinity/salinity
+#/Results/density/density
+
+# Para Lagrangian, los campos tienen los siguientes paths
+/Results/Group_1/Data_3D/fecal coliforms/fecal coliforms

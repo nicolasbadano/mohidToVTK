@@ -1,0 +1,7 @@
+*.cpp           text
+*.cu            text
+*.h             text
+*.txt           text
+*.vcproj        eol=crlf
+*.sln           eol=crlf
+*.sh            eol=lf
