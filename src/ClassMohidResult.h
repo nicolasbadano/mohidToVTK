@@ -14,13 +14,10 @@ public:
 	double		y;
 	double		z;
 	int			capa;
-	double		suma;
-	int			numSuma;
 
 	double		u;
 	double		v;
 	double		w;
-	double		salinidad;
 
 	Node(void) {};
 	~Node(void) {};
@@ -82,8 +79,8 @@ public:
 
 	vector<vector<vector<int> > >			nodollbCelda;	//Numero de nodo en la parte inferior izquierda anterior de la celda [capa][col][fil]
 
-	vector<Node>						nodo;
-	vector<Element>					elemento;
+	vector<Node>							nodo;
+	vector<Element>							elemento;
 	int										numNodos;
 	int										numElementos;
 
