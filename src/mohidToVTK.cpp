@@ -4,14 +4,14 @@
 // (c) Nicolás Diego Badano,
 // A.M.D.G.
 
-#include "ClassMohidResult.h"
+#include "MohidResults.h"
 #include <string.h>
 #include <stdlib.h>
 #include <iostream>
 
 int main(int argc, char* argv[])
 {
-	ClassMohidResult			*hbRes;
+	MohidResults				*hbRes;
 	bool						existe;
 	int							indice;
 	int							numArchivos = 0;
@@ -123,7 +123,7 @@ int main(int argc, char* argv[])
 	existe = true;
 	indice = pasoInicial;
 	while (existe && indice <= pasoFinal) {
-		hbRes = new ClassMohidResult(offset);
+		hbRes = new MohidResults(offset);
 
 		existe = hbRes->CargarResultado(nombreArchivoHDF5, indice);
 		if (existe) {

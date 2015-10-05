@@ -1,4 +1,4 @@
-#include "ClassMohidResult.h"
+#include "MohidResults.h"
 #include <fstream>
 #include <iostream>
 #include <iomanip>
@@ -8,7 +8,7 @@
 #include <stdlib.h>
 #include "InputFile.h"
 
-ClassMohidResult::ClassMohidResult(double offset)
+MohidResults::MohidResults(double offset)
 {
 	offsetVertical = offset;
 	cargadaMalla = false;
@@ -23,14 +23,14 @@ ClassMohidResult::ClassMohidResult(double offset)
 	hasTemperature=false;
 }
 
-ClassMohidResult::~ClassMohidResult(void)
+MohidResults::~MohidResults(void)
 {
 }
 
 //---------------------------------------------------------------------------------
 //----------- CargarResultado -----------------------------------------------------
 //---------------------------------------------------------------------------------
-bool ClassMohidResult::CargarResultado(char* archH5, int indice)
+bool MohidResults::CargarResultado(char* archH5, int indice)
 {
 	int col, fil, capa;
 
@@ -169,7 +169,7 @@ bool ClassMohidResult::CargarResultado(char* archH5, int indice)
 //---------------------------------------------------------------------------------
 //----------- AgregaResultado -----------------------------------------------------
 //---------------------------------------------------------------------------------
-bool ClassMohidResult::AgregarResultado(char* archH5, int indice)
+bool MohidResults::AgregarResultado(char* archH5, int indice)
 {
 	int col, fil, capa;
 
@@ -228,7 +228,7 @@ std::vector<std::string> split(const std::string &s, char delim) {
 //---------------------------------------------------------------------------------
 //----------- cargarCamposArchivo -------------------------------------------------
 //---------------------------------------------------------------------------------
-bool ClassMohidResult::cargarCamposArchivo(char* archH5, char* archCampos, int indice)
+bool MohidResults::cargarCamposArchivo(char* archH5, char* archCampos, int indice)
 {
 	int col, fil, capa;
 
@@ -280,7 +280,7 @@ bool ClassMohidResult::cargarCamposArchivo(char* archH5, char* archCampos, int i
 //---------------------------------------------------------------------------------
 //----------- CargarCampo3D -------------------------------------------------------
 //---------------------------------------------------------------------------------
-bool ClassMohidResult::CargarCampo3D(hid_t	file_id, char* nombreDataset, vector<vector<vector<double> > > &vectorRes)
+bool MohidResults::CargarCampo3D(hid_t	file_id, char* nombreDataset, vector<vector<vector<double> > > &vectorRes)
 {
 	int col, fil, capa;
 	herr_t      status;			//Status de las funciones
@@ -317,7 +317,7 @@ bool ClassMohidResult::CargarCampo3D(hid_t	file_id, char* nombreDataset, vector<
 //---------------------------------------------------------------------------------
 //----------- CargarCampo2D -------------------------------------------------------
 //---------------------------------------------------------------------------------
-bool ClassMohidResult::CargarCampo2D(hid_t	file_id, char* nombreDataset, vector<vector<double> > &vectorRes)
+bool MohidResults::CargarCampo2D(hid_t	file_id, char* nombreDataset, vector<vector<double> > &vectorRes)
 {
 	int col, fil;
 	herr_t      status;		//Status de las funciones
@@ -350,7 +350,7 @@ bool ClassMohidResult::CargarCampo2D(hid_t	file_id, char* nombreDataset, vector<
 //---------------------------------------------------------------------------------
 //----------- cargarMapa ----------------------------------------------------------
 //---------------------------------------------------------------------------------
-bool ClassMohidResult::cargarMapa( char* nombreMapa )
+bool MohidResults::cargarMapa( char* nombreMapa )
 {
 	InputFile aFile( nombreMapa );
 
@@ -378,7 +378,7 @@ bool ClassMohidResult::cargarMapa( char* nombreMapa )
 //---------------------------------------------------------------------------------
 //----------- ConvertirResultadoAVTK ----------------------------------------------
 //---------------------------------------------------------------------------------
-bool ClassMohidResult::ConvertirResultadoAVTK(void)
+bool MohidResults::ConvertirResultadoAVTK(void)
 {
 	int	fil, col, capa;
 
@@ -431,7 +431,7 @@ bool ClassMohidResult::ConvertirResultadoAVTK(void)
 //---------------------------------------------------------------------------------
 //----------- CrearNodo -----------------------------------------------------------
 //---------------------------------------------------------------------------------
-int ClassMohidResult::CrearNodo(int capa, int col, int fil)
+int MohidResults::CrearNodo(int capa, int col, int fil)
 {
 	int capaMask;
 	if (capa < numCapas) {
@@ -489,7 +489,7 @@ int ClassMohidResult::CrearNodo(int capa, int col, int fil)
 //---------------------------------------------------------------------------------
 //----------- EscribirResultadoVTK ------------------------------------------------
 //---------------------------------------------------------------------------------
-bool ClassMohidResult::EscribirResultadoVTK(char* archVTK, bool EscribirComo2D)
+bool MohidResults::EscribirResultadoVTK(char* archVTK, bool EscribirComo2D)
 {
 	int					i;
 	vector<double>		valorNodo;
@@ -658,7 +658,7 @@ bool ClassMohidResult::EscribirResultadoVTK(char* archVTK, bool EscribirComo2D)
 //---------------------------------------------------------------------------------
 //----------- EscribirResultadoVTKBinario -----------------------------------------
 //---------------------------------------------------------------------------------
-bool ClassMohidResult::EscribirResultadoVTKBinario(char* archVTK, bool EscribirComo2D)
+bool MohidResults::EscribirResultadoVTKBinario(char* archVTK, bool EscribirComo2D)
 {
 	int					i,j,datoInt;
 	float				dato;
@@ -872,7 +872,7 @@ bool ClassMohidResult::EscribirResultadoVTKBinario(char* archVTK, bool EscribirC
 //---------------------------------------------------------------------------------
 //----------- EscribirResultadoGIS ------------------------------------------------
 //---------------------------------------------------------------------------------
-bool ClassMohidResult::EscribirResultadoGIS(int indice)
+bool MohidResults::EscribirResultadoGIS(int indice)
 {
 	char				nombreArchivo[500];
 
@@ -1021,7 +1021,7 @@ bool ClassMohidResult::EscribirResultadoGIS(int indice)
 //---------------------------------------------------------------------------------
 //----------- CalcularValoresEnNodos ----------------------------------------------
 //---------------------------------------------------------------------------------
-void ClassMohidResult::CalcularValoresEnNodos(vector<vector<vector<double> > > &valElemento, vector<double> &valNodo)
+void MohidResults::CalcularValoresEnNodos(vector<vector<vector<double> > > &valElemento, vector<double> &valNodo)
 {
 	int					i, j;
 	vector<int>			numValNodo;
@@ -1050,7 +1050,7 @@ void ClassMohidResult::CalcularValoresEnNodos(vector<vector<vector<double> > > &
 //---------------------------------------------------------------------------------
 //----------- CalcularValoresEnNodos2D --------------------------------------------
 //---------------------------------------------------------------------------------
-void ClassMohidResult::CalcularValoresEnNodos2D(vector<vector<double> > &valElemento, vector<double> &valNodo)
+void MohidResults::CalcularValoresEnNodos2D(vector<vector<double> > &valElemento, vector<double> &valNodo)
 {
 	int					i, j;
 	vector<int>			numValNodo;
@@ -1079,7 +1079,7 @@ void ClassMohidResult::CalcularValoresEnNodos2D(vector<vector<double> > &valElem
 //---------------------------------------------------------------------------------
 //----------- Devolver --------------------------------------------
 //---------------------------------------------------------------------------------
-void ClassMohidResult::DevolverNombreDataset(const char *nombreBase, int indice, char *nombreFinal)
+void MohidResults::DevolverNombreDataset(const char *nombreBase, int indice, char *nombreFinal)
 {
 	char			num[10];
 

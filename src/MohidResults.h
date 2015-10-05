@@ -37,7 +37,7 @@ public:
 	~Element(void) {};
 };
 
-class ClassMohidResult
+class MohidResults
 {
 public:
 
@@ -86,8 +86,8 @@ public:
 
 	int										numDatos;
 	float									offsetVertical;
-	ClassMohidResult(double offset);
-	~ClassMohidResult(void);
+	MohidResults(double offset);
+	~MohidResults(void);
 
 	bool CargarResultado(char* archHDF5, int indice);
 	bool AgregarResultado(char* archHDF5, int indice);

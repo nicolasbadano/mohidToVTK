@@ -1,8 +1,8 @@
 # Define the symbols we might want to change:
 CXX	:= gcc
-CXXFLAGS := -g 
-    
-OBJECTS	:= ClassMohidResult.o  mohidToVTK.o
+CXXFLAGS := -g
+
+OBJECTS	:= MohidResult.o  mohidToVTK.o
 
 #-L/usr
 LIBS	:= -lstdc++ -lhdf5 -lhdf5_hl -lz
