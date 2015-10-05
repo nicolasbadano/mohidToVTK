@@ -15,7 +15,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="../src/ClassMohidResult.cpp">
+    <ClCompile Include="../src/MohidResults.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="../src/mohidToVTK.cpp">
@@ -23,7 +23,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="../src/ClassMohidResult.h">
+    <ClInclude Include="../src/MohidResults.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="../src/InputFile.h">

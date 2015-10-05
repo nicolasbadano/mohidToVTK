@@ -95,11 +95,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="../src/ClassMohidResult.cpp" />
+    <ClCompile Include="../src/MohidResults.cpp" />
     <ClCompile Include="../src/mohidToVTK.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="../src/ClassMohidResult.h" />
+    <ClInclude Include="../src/MohidResults.h" />
     <ClInclude Include="../src/InputFile.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

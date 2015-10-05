@@ -13,7 +13,7 @@ public:
 	double		x;
 	double		y;
 	double		z;
-	int			capa;
+	int			layer;
 
 	double		u;
 	double		v;
@@ -23,18 +23,18 @@ public:
 	~Node(void) {};
 };
 
-class Element
+class Cell
 {
 public:
-	int			nodo[8];
-	int			numNodos;
+	int			node[8];
+	int			numNodes;
 
 	int			col;
-	int			fil;
-	int			capa;
+	int			row;
+	int			layer;
 
-	Element(void) {};
-	~Element(void) {};
+	Cell(void) {};
+	~Cell(void) {};
 };
 
 class MohidResults
@@ -42,20 +42,18 @@ class MohidResults
 public:
 
 	int										numCol;
-	int										numFil;
-	int										numCapas;
+	int										numRow;
+	int										numLayers;
 
-	bool									cargadaMalla;
-	bool									cargadoResultado;
-	bool									cargadoMapa;
+	bool									mapIsLoaded;
 
 	vector<vector<vector<int> > >			mask;
 	vector<vector<vector<double> > >		u;
 	vector<vector<vector<double> > >		v;
 	vector<vector<vector<double> > >		w;
-	vector<vector<double> >					batimetria;
-	vector<vector<double> >					nivelSuperficie;
-	vector<vector<double> >					mapa;
+	vector<vector<double> >					bathymetry;
+	vector<vector<double> >					surfaceElevation;
+	vector<vector<double> >					map;
 
 	vector<vector<vector<double> > >		salinity;
 	bool									hasSalinity;
@@ -69,25 +67,25 @@ public:
 	vector<vector<vector<double> > >		temperature;
 	bool									hasTemperature;
 
-	vector<vector<vector<vector<double> > > > campos;
-	vector<std::string >					listaCampos;
+	vector<vector<vector<vector<double> > > > fields;
+	vector<std::string >					fieldNames;
 
-	// Coordenada x del nodo ll de cada fila y columna
+	// Coordinate x of the ll node of every cell (row and column)
 	vector<vector<double> >					x;
-	// Coordenada y del nodo ll de cada fila y columna
+	// Coordinate y of the ll node of every cell (row and column)
 	vector<vector<double> >					y;
-	// Coordenada z del piso de cada celda (fila y columna y capas)
+	// Coordinate z of the floor of every cell (row, column and layer)
 	vector<vector<vector<double> > >		z;
-	//Numero de nodo en la parte inferior izquierda anterior de la celda [capa][col][fil]
-	vector<vector<vector<int> > >			nodollbCelda;
+	// Index of the lower, left, bottom node of the cell [layer][col][row]
+	vector<vector<vector<int> > >			cellLLBNodeIndex;
 
-	vector<Node>							nodo;
-	vector<Element>							elemento;
-	int										numNodos;
-	int										numElementos;
+	vector<Node>							node;
+	vector<Cell>							cell;
+	int										numNodes;
+	int										numCells;
 
-	int										numDatos;
-	float									offsetVertical;
+	int										numValues;
+	float									verticalOffset;
 	MohidResults(double offset);
 	~MohidResults(void);
 
@@ -104,7 +102,7 @@ public:
 
 	void getDatasetName(const char *nombreBase, int indice, char *nombreFinal);
 
-	int  createNode(int capa, int col, int fil);
+	int  createNode(int layer, int col, int row);
 
 	bool writeResultsVTK(char* archVTK, bool EscribirComo2D);
 	bool writeResultsVTKBinary(char* archVTK, bool EscribirComo2D);

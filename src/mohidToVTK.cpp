@@ -150,7 +150,6 @@ int main(int argc, char* argv[])
 			mohidResults.writeResultsASC(step);
 		}
 
-		delete results;
 		step += stepInterval;
 	}
 	return 0;
