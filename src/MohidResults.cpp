@@ -7,6 +7,7 @@
 #include <sstream>
 #include <stdlib.h>
 #include "InputFile.h"
+#include <algorithm>
 
 MohidResults::MohidResults(double offset)
 {
@@ -254,7 +255,9 @@ bool MohidResults::loadFieldsFromFieldFile(char* hdf5FileName, char* fieldsFileN
         if (existe) {
             cout << "\tLoading field: " << line << "\n";
             std::vector<std::string> x = split(line, '/');
-            fieldNames.push_back(x.back());
+            std::string fieldName = x.back();
+            std::replace( fieldName.begin(), fieldName.end(), ' ', '_');
+            fieldNames.push_back(fieldName);
         } else {
             fields.resize(fields.size()-1);
         }
@@ -528,7 +531,7 @@ bool MohidResults::writeResultsVTK(char* vtkFileName, bool writeAs2D)
 
     // Cell values  --------------------------------------
     vtk << "CELL_DATA " << numCells << "\n";
-    // Velocity values
+    // Velocity
     vtk << "VECTORS " << "vel" << " float" << "\n";
     for (int i=0; i<numCells; i++) {
         vtk << u[cell[i].layer][cell[i].col][cell[i].row]
@@ -537,15 +540,15 @@ bool MohidResults::writeResultsVTK(char* vtkFileName, bool writeAs2D)
     }
     vtk << "\n";
 
-    //Valores de tirante
-    vtk << "SCALARS " << "Tirante" << " float" << "\n";
+    // Depth
+    vtk << "SCALARS " << "depth" << " float" << "\n";
     vtk << "LOOKUP_TABLE default" << "\n";
     for (int i=0; i<numCells; i++) {
         vtk << z[numLayers][cell[i].col][cell[i].row] - z[0][cell[i].col][cell[i].row] << "\n";
     }
     vtk << "\n";
 
-    //Valores de fields adicionales
+    // Additional fields
     for (int nc=0; nc<fieldNames.size(); nc++) {
         vtk << "SCALARS " << fieldNames[nc] << " float" << "\n";
         vtk << "LOOKUP_TABLE default" << "\n";
