@@ -11,43 +11,36 @@
 
 int main(int argc, char* argv[])
 {
-	MohidResults				*hbRes;
-	bool						existe;
-	int							indice;
-	int							numArchivos = 0;
-	char						nombreArchivoHDF5[500];
-	char						nombreArchivoHDF5_2[500];
-	char						nombreArchivoMapa[500];
-	char						nombreArchivoCampos[300];
-	bool						haySegundoArchivo;
-	char						nombreArchivo[300];
-	char						pasos[100];
-	int							count;
-	int							i, j;
-	int							pasoInicial, pasoFinal, cadaCuantos;
-	int 						inicio, fin;
-	bool						terminar = false;
-	bool						loadMap = false;
-	bool						archivoCampos = false;
-	double						offset = 0;
-
 	cout << "\n";
 	cout << "----------------------------- mohidToVTK -----------------------------\n";
 	cout << "\n";
 
-	pasoInicial = 1; pasoFinal = 1000000; cadaCuantos = 1;
+	int numFiles = 0;
+	char hdf5FileName1[500];
+	char hdf5FileName2[500];
+	char fieldsFileName[300];
+	char mapFileNane[500];
 
-    // Evaluar parámetros recibidos
-	for (i=1; i < argc; i++) {
+	bool finish = false;
+	bool loadMap = false;
+	bool fieldsFileExists = false;
+	double offset = 0;
+
+	int stepInitial = 1;
+	int stepFinal = 1000000;
+	int stepInterval = 1;
+
+    // Evaluate command line parameters
+	for (int i=1; i < argc; i++) {
 		if (argv[i][0] == '-' && argv[i][1] == 'm') {
-			strcpy(nombreArchivoMapa, argv[i+1]);
+			strcpy(mapFileNane, argv[i+1]);
 			loadMap = true;
 			i++;
 			continue;
 		}
 		if (argv[i][0] == '-' && argv[i][1] == 'c') {
-			strcpy(nombreArchivoCampos, argv[i+1]);
-			archivoCampos = true;
+			strcpy(fieldsFileName, argv[i+1]);
+			fieldsFileExists = true;
 			i++;
 			continue;
 		}
@@ -58,106 +51,107 @@ int main(int argc, char* argv[])
 		}
 
 		if (argv[i][0] == '-' && argv[i][1] == 't') {
-			// Se está especificando paso inicial:pasofinal:cadacuantos
-			inicio = 2;
-			for (j = inicio; terminar == false; j++) {
+			// Found initialStep:stepFinal:stepInterval
+			int start = 2;
+			for (int j = start; finish == false; j++) {
 				if (argv[i][j] == ':' || argv[i][j] == '\0') {
-					if (argv[i][j] == '\0') terminar = true;
-					fin = j;
-					if (fin > inicio) {
+					if (argv[i][j] == '\0') finish = true;
+					int end = j;
+					if (end > start) {
 						argv[i][j] = '\0';
-						// Encontramos el primer valor, el paso inicial
-						pasoInicial = atoi(argv[i]+inicio);
-						pasoFinal = pasoInicial;
+						// Found the first value, initial step
+						stepInitial = atoi(argv[i]+start);
+						stepFinal = stepInitial;
 					}
-					inicio = fin + 1;
+					start = end + 1;
 					break;
 				}
 			}
-			for (j = inicio; terminar == false; j++) {
+			for (int j = start; finish == false; j++) {
 				if (argv[i][j] == ':' || argv[i][j] == '\0') {
-					if (argv[i][j] == '\0') terminar = true;
-					fin = j;
-					if (fin > inicio) {
-						// Encontramos el segundo valor, el paso final
+					if (argv[i][j] == '\0') finish = true;
+					int end = j;
+					if (end > start) {
+						// Found the second value, final step
 						argv[i][j] = '\0';
-						pasoFinal = atoi(argv[i]+inicio);
+						stepFinal = atoi(argv[i]+start);
 					}
-					inicio = fin + 1;
+					start = end + 1;
 					break;
 				}
 			}
-			for (j = inicio; terminar == false; j++) {
+			for (int j = start; finish == false; j++) {
 				if (argv[i][j] == '\0') {
-					terminar = true;
-					fin = j;
-					if (fin > inicio) {
-						// Encontramos el tercer valor, cada cuantos
+					finish = true;
+					int end = j;
+					if (end > start) {
+						// Found the third value, step interval
 						argv[i][j] = '\0';
-						cadaCuantos = atoi(argv[i]+inicio);
+						stepInterval = atoi(argv[i]+start);
 					}
-					inicio = fin + 1;
+					start = end + 1;
 					break;
 				}
 			}
 		} else {
-			// Asumimos que es un nombre de archivo
-			if (numArchivos == 0) {
-				strcpy(nombreArchivoHDF5, argv[i]);
-				numArchivos++;
-			} else if (numArchivos == 1) {
-				strcpy(nombreArchivoHDF5_2, argv[i]);
-				numArchivos++;
-			} else ; //Ignorar archivos subsiguientes
+			// Asume it's a filename
+			if (numFiles == 0) {
+				strcpy(hdf5FileName1, argv[i]);
+				numFiles++;
+			} else if (numFiles == 1) {
+				strcpy(hdf5FileName2, argv[i]);
+				numFiles++;
+			}
+			// Ignore subsequent files
 		}
 	}
-	if (numArchivos == 0) {	// No pasaron nombre de archivo
-		strcpy(nombreArchivoHDF5, "Hydrodynamic_1.hdf5");
-		numArchivos = 1;
+	// If no file name was supplied, addopt a default
+	if (numFiles == 0) {
+		strcpy(hdf5FileName1, "Hydrodynamic_1.hdf5");
+		numFiles = 1;
 	}
 
-	cout << "Paso Inicial a Exportar: " << pasoInicial << "\n";
-	cout << "Paso Final a Exportar: " << pasoFinal << "\n";
-	cout << "Cada Cuantos pasos Exportar: " << cadaCuantos << "\n";
+	cout << "Exporting steps " << stepInitial << " through " << stepFinal << " every " << stepInterval << "\n";
 
-	existe = true;
-	indice = pasoInicial;
-	while (existe && indice <= pasoFinal) {
-		hbRes = new MohidResults(offset);
+	bool exists = true;
+	int step = stepInitial;
+	while (exists && step <= stepFinal) {
+		MohidResults mohidResults(offset);
 
-		existe = hbRes->loadResult(nombreArchivoHDF5, indice);
-		if (existe) {
-			if (numArchivos == 2) {
-				if (archivoCampos) {
-					existe = hbRes->loadFieldsFromFieldFile( nombreArchivoHDF5_2, nombreArchivoCampos, indice);
+		exists = mohidResults.loadResult(hdf5FileName1, step);
+		if (exists) {
+			if (numFiles == 2) {
+				if (fieldsFileExists) {
+					exists = mohidResults.loadFieldsFromFieldFile( hdf5FileName2, fieldsFileName, step);
 				} else {
-					existe = hbRes->addResult(nombreArchivoHDF5_2, indice);
+					exists = mohidResults.addResult(hdf5FileName2, step);
 				}
 
-				if (existe == false) break;
+				if (exists == false) break;
 			}
 
 			if (loadMap) {
-				hbRes->loadMap( nombreArchivoMapa );
+				mohidResults.loadMap( mapFileNane );
 			}
 
 			//Convertir los resultados a VTK
-			hbRes->convertResultsToVTK();
+			mohidResults.convertResultsToVTK();
 
 			//Escribir el archivo VTK
-			hbRes->getDatasetName("Hydro_", indice, nombreArchivo);
-			strcat(nombreArchivo, ".vtk");
-			hbRes->writeResultsVTK(nombreArchivo,false);
+			char fileName[300];
+			mohidResults.getDatasetName("Hydro_", step, fileName);
+			strcat(fileName, ".vtk");
+			mohidResults.writeResultsVTK(fileName, false);
 
-			hbRes->getDatasetName("Hydro2D_", indice, nombreArchivo);
-			strcat(nombreArchivo, ".vtk");
-			hbRes->writeResultsVTK(nombreArchivo,true);
+			mohidResults.getDatasetName("Hydro2D_", step, fileName);
+			strcat(fileName, ".vtk");
+			mohidResults.writeResultsVTK(fileName, true);
 
-			hbRes->EscribirResultadoGIS(indice);
+			mohidResults.writeResultsASC(step);
 		}
 
-		delete hbRes;
-		indice+=cadaCuantos;
+		delete results;
+		step += stepInterval;
 	}
 	return 0;
 }
