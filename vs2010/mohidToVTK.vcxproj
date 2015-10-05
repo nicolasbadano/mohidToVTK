@@ -99,10 +99,8 @@
     <ClCompile Include="../src/mohidToVTK.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="../src/ClassElementos.h" />
     <ClInclude Include="../src/ClassMohidResult.h" />
-    <ClInclude Include="../src/ClassNodo.h" />
-    <ClInclude Include="..\src\InputFile.h" />
+    <ClInclude Include="../src/InputFile.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

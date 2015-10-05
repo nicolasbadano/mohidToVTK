@@ -23,16 +23,10 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="../src/ClassElementos.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="../src/ClassMohidResult.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="../src/ClassNodo.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\InputFile.h">
+    <ClInclude Include="../src/InputFile.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

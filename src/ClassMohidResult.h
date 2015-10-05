@@ -2,12 +2,43 @@
 
 #include <vector>
 #include <string>
-#include "ClassNodo.h"
-#include "ClassElementos.h"
 #include "hdf5.h"
 #include "hdf5_hl.h"
 
 using namespace std;
+
+class Node
+{
+public:
+	double		x;
+	double		y;
+	double		z;
+	int			capa;
+	double		suma;
+	int			numSuma;
+
+	double		u;
+	double		v;
+	double		w;
+	double		salinidad;
+
+	Node(void) {};
+	~Node(void) {};
+};
+
+class Element
+{
+public:
+	int			nodo[8];
+	int			numNodos;
+
+	int			col;
+	int			fil;
+	int			capa;
+
+	Element(void) {};
+	~Element(void) {};
+};
 
 class ClassMohidResult
 {
@@ -20,7 +51,7 @@ public:
 	bool		cargadaMalla;
 	bool		cargadoResultado;
 	bool		cargadoMapa;
-	
+
 	vector<vector<vector<int> > >			mask;
 	vector<vector<vector<double> > >		u;
 	vector<vector<vector<double> > >		v;
@@ -31,16 +62,16 @@ public:
 
 	vector<vector<vector<double> > >		salinity;
 	bool									hasSalinity;
-	
+
 	vector<vector<vector<double> > >		density;
 	bool									hasDensity;
 
 	vector<vector<vector<double> > >		coliforms;
 	bool									hasColiforms;
-	
+
 	vector<vector<vector<double> > >		temperature;
 	bool									hasTemperature;
-	
+
 	vector<vector<vector<vector<double> > > > campos;
 	vector<std::string >					listaCampos;
 
@@ -51,11 +82,11 @@ public:
 
 	vector<vector<vector<int> > >			nodollbCelda;	//Numero de nodo en la parte inferior izquierda anterior de la celda [capa][col][fil]
 
-	vector<ClassNodo>						nodo;
-	vector<ClassElementos>					elemento;
+	vector<Node>						nodo;
+	vector<Element>					elemento;
 	int										numNodos;
 	int										numElementos;
-	
+
 	int										numDatos;
 	float									offsetVertical;
 	ClassMohidResult(double offset);
