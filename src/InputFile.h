@@ -63,21 +63,16 @@ public:
 
 		tagVec.resize(0);
 
-		do
-		{
-			if (line[i] != '\t' && line[i] != ' ' && line[i] != '\0')
-			{	//Tenemos un caracter ==> está por comenzar algo??
-				if (posTermino == true)
-				{	//Comienza algo
+		do {
+			if (line[i] != '\t' && line[i] != ' ' && line[i] != '\0') {
+				//Tenemos un caracter ==> está por comenzar algo??
+				if (posTermino == true) {	//Comienza algo
 					posTermino = false;
 					posActual++;
 					inicio = i;
 				}
-			}
-			else
-			{	//Tenemos un espacio ==> algo terminó?
-				if (posTermino == false)
-				{	//Algo terminó
+			} else {	//Tenemos un espacio ==> algo terminó?
+				if (posTermino == false) {	//Algo terminó
 					posTermino = true;
 					tagVec.resize(posActual);
 
@@ -118,10 +113,10 @@ public:
 
 		if (!openedFile) return false;
 
-		while (true)
-		{
-			if (!ifsPtr->getline(lineBuffer, 5000, '\n'))
+		while (true) {
+			if (!ifsPtr->getline(lineBuffer, 5000, '\n')) {
 				return false;
+			}
 
 			lineNumber++;
 			//PRINTVARIABLE( lineBuffer );
@@ -131,12 +126,10 @@ public:
 			stripLeadingAndTrailingBlanks(lineStr);
 			//PRINTVARIABLE( lineStr );
 			// If it is a comment
-			if (commentPrefix.compare(0, commentPrefix.length(), lineStr) != 0)
-			{
+			if (commentPrefix.compare(0, commentPrefix.length(), lineStr) != 0) {
 				returnTagVector(lineBuffer, tagVec);
 				//PRINTVARIABLE( tagVec.size() );
-				if (tagVec.size() > 0)
-				{
+				if (tagVec.size() > 0) {
 					//PRINTVARIABLE( tagVec[0] );
 					return true;
 				}
@@ -150,8 +143,7 @@ public:
 
 		if (!openedFile) return false;
 
-		while (true)
-		{
+		while (true) {
 			if (!ifsPtr->getline(lineBuffer, 5000, '\n'))
 				return false;
 
@@ -162,15 +154,15 @@ public:
 			stripLeadingAndTrailingBlanks(lineStr);
 			// If it is a comment
 			int comp = lineStr.compare(0, commentPrefix.length(), commentPrefix);
-			if (comp != 0)
-			{
+			if (comp != 0) {
 				std::stringstream	lineStream;
 				lineStream << lineBuffer;
 				line = lineStream.str();
-				if (line.length() > 0)
+				if (line.length() > 0) {
 					return true;
-				else
+				} else {
 					continue;
+				}
 			}
 		}
 	}
@@ -192,15 +184,15 @@ public:
 		lineInfoStream << fileName_ << ":" << lineNumber;
 		return lineInfoStream.str();
 	};
-	
+
 	void setCommentPrefix(const std::string &prefix)
 	{
 		commentPrefix = prefix;
 	};
-	
+
 	bool isFileOpen()
 	{
 		return openedFile;
-	};	
+	};
 };
 

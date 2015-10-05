@@ -65,14 +65,13 @@ bool ClassMohidResult::CargarResultado(char* archH5, int indice)
 	status = H5LTread_dataset_int(file_id,datasetName, mascara);
 
 	mask.resize(numCapas);
-	for (capa = 0; capa < numCapas; capa++)
-	{
+	for (capa = 0; capa < numCapas; capa++) {
 		mask[capa].resize(numCol);
-		for (col = 0; col < numCol; col++)
-		{
+		for (col = 0; col < numCol; col++) {
 			mask[capa][col].resize(numFil,(int)0);
-			for (fil = 0; fil < numFil; fil++)
+			for (fil = 0; fil < numFil; fil++) {
 				mask[capa][col][fil] = mascara[capa*numCol*numFil+col*numFil+fil];
+			}
 		}
 	}
 
@@ -87,11 +86,11 @@ bool ClassMohidResult::CargarResultado(char* archH5, int indice)
 	status = H5LTread_dataset_float(file_id,"/Grid/ConnectionX", data);
 
 	x.resize(numCol+1);
-	for (col = 0; col < numCol+1; col++)
-	{
+	for (col = 0; col < numCol+1; col++) {
 		x[col].resize(numFil+1,(float)0);
-		for (fil = 0; fil < numFil+1; fil++)
+		for (fil = 0; fil < numFil+1; fil++) {
 			x[col][fil] = data[col*(numFil+1)+fil];
+		}
 	}
 
 
@@ -105,11 +104,11 @@ bool ClassMohidResult::CargarResultado(char* archH5, int indice)
 	status = H5LTread_dataset_float(file_id,"/Grid/ConnectionY", data);
 
 	y.resize(numCol+1);
-	for (col = 0; col < numCol+1; col++)
-	{
+	for (col = 0; col < numCol+1; col++) {
 		y[col].resize(numFil+1,(float)0);
-		for (fil = 0; fil < numFil+1; fil++)
+		for (fil = 0; fil < numFil+1; fil++) {
 			y[col][fil] = data[col*(numFil+1)+fil];
+		}
 	}
 
 
@@ -125,11 +124,9 @@ bool ClassMohidResult::CargarResultado(char* archH5, int indice)
 	status = H5LTread_dataset_float(file_id,datasetName, data);
 
 	z.resize(numCapas+1);
-	for (capa = 0; capa < numCapas+1; capa++)
-	{
+	for (capa = 0; capa < numCapas+1; capa++) {
 		z[capa].resize(numCol);
-		for (col = 0; col < numCol; col++)
-		{
+		for (col = 0; col < numCol; col++) {
 			z[capa][col].resize(numFil,(int)0);
 			for (fil = 0; fil < numFil; fil++)
 				z[capa][col][fil] = -data[capa*(numCol)*(numFil)+col*(numFil)+fil];
@@ -138,22 +135,27 @@ bool ClassMohidResult::CargarResultado(char* archH5, int indice)
 
 	// Cargar Velocidades
 	DevolverNombreDataset("/Results/velocity U/velocity U_", indice, datasetName);
-	if (CargarCampo3D(file_id, datasetName, u) != true)
+	if (CargarCampo3D(file_id, datasetName, u) != true) {
 		return false;
+	}
 	DevolverNombreDataset("/Results/velocity V/velocity V_", indice, datasetName);
-	if (CargarCampo3D(file_id, datasetName, v) != true)
+	if (CargarCampo3D(file_id, datasetName, v) != true) {
 		return false;
+	}
 	DevolverNombreDataset("/Results/velocity W/velocity W_", indice, datasetName);
-	if (CargarCampo3D(file_id, datasetName, w) != true)
+	if (CargarCampo3D(file_id, datasetName, w) != true) {
 		return false;
+	}
 
 	// Cargar batimetria, y nivel superficial cmo arrays planos (columna, fila)
-	if (CargarCampo2D(file_id, "/Grid/Bathymetry", batimetria) != true)
+	if (CargarCampo2D(file_id, "/Grid/Bathymetry", batimetria) != true) {
 		return false;
+	}
 
 	DevolverNombreDataset("/Results/water level/water level_", indice, datasetName);
-	if (CargarCampo2D(file_id, datasetName, nivelSuperficie) != true)
+	if (CargarCampo2D(file_id, datasetName, nivelSuperficie) != true) {
 		return false;
+	}
 
 	//close file
 	status = H5Fclose (file_id);
@@ -251,24 +253,20 @@ bool ClassMohidResult::cargarCamposArchivo(char* archH5, char* archCampos, int i
 
 	InputFile iFile(archCampos);
 	std::string line;
-	while (iFile.returnNextLine(line))
-	{
+	while (iFile.returnNextLine(line)) {
 		std::stringstream sstream;
 		sstream << line << "_";
 		DevolverNombreDataset(sstream.str().data(), indice, datasetName);
 
 		campos.resize(campos.size()+1);
 		bool existe = CargarCampo3D(file_id, datasetName, campos[campos.size()-1]);
-		if (existe)
-		{
+		if (existe) {
 			cout << "\tCargado campo: " << line << "\n";
 
 			std::vector<std::string> x = split(line, '/');
 
 			listaCampos.push_back(x.back());
-		}
-		else
-		{
+		} else {
 			campos.resize(campos.size()-1);
 		}
 	}
@@ -301,14 +299,13 @@ bool ClassMohidResult::CargarCampo3D(hid_t	file_id, char* nombreDataset, vector<
 	status = H5LTread_dataset_float(file_id,nombreDataset, data);
 
 	vectorRes.resize(numCapas);
-	for (capa = 0; capa < numCapas; capa++)
-	{
+	for (capa = 0; capa < numCapas; capa++) {
 		vectorRes[capa].resize(numCol);
-		for (col = 0; col < numCol; col++)
-		{
+		for (col = 0; col < numCol; col++) {
 			vectorRes[capa][col].resize(numFil,(int)0);
-			for (fil = 0; fil < numFil; fil++)
+			for (fil = 0; fil < numFil; fil++) {
 				vectorRes[capa][col][fil] = data[capa*(numCol)*(numFil)+col*(numFil)+fil];
+			}
 		}
 	}
 
@@ -338,11 +335,11 @@ bool ClassMohidResult::CargarCampo2D(hid_t	file_id, char* nombreDataset, vector<
 	status = H5LTread_dataset_float(file_id,nombreDataset, data);
 
 	vectorRes.resize(numCol);
-	for (col = 0; col < numCol; col++)
-	{
+	for (col = 0; col < numCol; col++) {
 		vectorRes[col].resize(numFil,(int)0);
-		for (fil = 0; fil < numFil; fil++)
+		for (fil = 0; fil < numFil; fil++) {
 			vectorRes[col][fil] = data[col*(numFil)+fil];
+		}
 	}
 
 	delete [] data; data = NULL;
@@ -362,20 +359,18 @@ bool ClassMohidResult::cargarMapa( char* nombreMapa )
 	aFile.setCommentPrefix(std::string("<"));
 
 	mapa.resize(numCol);
-	for (int col = 0; col < numCol; col++)
-	{
+	for (int col = 0; col < numCol; col++) {
 		mapa[col].resize(numFil,0);
 	}
 
-	for (int fil = 0; fil < numFil; fil++)
-		for (int col = 0; col < numCol; col++)
-		{
+	for (int fil = 0; fil < numFil; fil++) {
+		for (int col = 0; col < numCol; col++) {
 			aFile.returnNextLineOfTags(tagVec);
 			if (tagVec.size() < 3)
 				return false;
 			mapa[col][fil] = strtod(tagVec[2].data(), 0);
 		}
-
+	}
 	cargadoMapa = true;
 	return true;
 }
@@ -397,21 +392,17 @@ bool ClassMohidResult::ConvertirResultadoAVTK(void)
 
 	//Crear array de número de nodos
 	nodollbCelda.resize(numCapas+1);
-	for (capa = 0; capa < numCapas+1; capa++)
-	{
+	for (capa = 0; capa < numCapas+1; capa++) {
 		nodollbCelda[capa].resize(numCol+1);
-		for (col=0; col<numCol+1; col++)
+		for (col=0; col<numCol+1; col++) {
 			nodollbCelda[capa][col].resize(numFil+1, -1);
+		}
 	}
 
-	for (capa=0; capa<numCapas; capa++)
-	{
-		for (col=0; col<numCol-4; col++)
-		{
-			for (fil=0; fil<numFil-4; fil++)
-			{
-				if (mask[capa][col][fil] == 1)
-				{
+	for (capa=0; capa<numCapas; capa++) {
+		for (col=0; col<numCol-4; col++) {
+			for (fil=0; fil<numFil-4; fil++) {
+				if (mask[capa][col][fil] == 1) {
 					//Es parte del dominio
 
 					//Crear el elemento y los Nodos si hace falta
@@ -443,18 +434,14 @@ bool ClassMohidResult::ConvertirResultadoAVTK(void)
 int ClassMohidResult::CrearNodo(int capa, int col, int fil)
 {
 	int capaMask;
-	if (capa < numCapas)
-	{
+	if (capa < numCapas) {
 		// Es una capa de celdas
 		capaMask = capa;
-	}
-	else
-	{
+	} else {
 		// Es la capa que está por encima de la superficie libre
 		capaMask = capa-1;
 	}
-	if (nodollbCelda[capa][col][fil] == -1)
-	{
+	if (nodollbCelda[capa][col][fil] == -1) {
 		//El nodo no existe --> crearlo
 		double	sumaZ ;
 		int		numSumaZ ;
@@ -465,32 +452,25 @@ int ClassMohidResult::CrearNodo(int capa, int col, int fil)
 		sumaZ = 0;
 		numSumaZ = 0;
 		//Calcular la coordenada Z promedio de las celdas vecinas en fias y columnas
-		if (col > 0)
-		{
-			if (mask[capaMask][col-1][fil] == 1)
-			{
+		if (col > 0) {
+			if (mask[capaMask][col-1][fil] == 1) {
 				numSumaZ++;
 				sumaZ += z[capa][col-1][fil];
 			}
-			if (fil > 0)
-			{
-				if (mask[capaMask][col-1][fil-1] == 1)
-				{
+			if (fil > 0) {
+				if (mask[capaMask][col-1][fil-1] == 1) {
 					numSumaZ++;
 					sumaZ += z[capa][col-1][fil-1];
 				}
 			}
 		}
-		if (fil > 0)
-		{
-			if (mask[capaMask][col][fil-1] == 1)
-			{
+		if (fil > 0) {
+			if (mask[capaMask][col][fil-1] == 1) {
 				numSumaZ++;
 				sumaZ += z[capa][col][fil-1];
 			}
 		}
-		if (mask[capaMask][col][fil] == 1)
-		{
+		if (mask[capaMask][col][fil] == 1) {
 			numSumaZ++;
 			sumaZ += z[capa][col][fil];
 		}
@@ -500,9 +480,7 @@ int ClassMohidResult::CrearNodo(int capa, int col, int fil)
 		nodollbCelda[capa][col][fil] = numNodos;
 		numNodos++;
 		return numNodos-1;
-	}
-	else
-	{
+	} else {
 		//El nodo existe
 		return nodollbCelda[capa][col][fil];
 	}
@@ -535,19 +513,18 @@ bool ClassMohidResult::EscribirResultadoVTK(char* archVTK, bool EscribirComo2D)
 
 	//Nodos
 	vtk << "POINTS " << numNodos << " double" << "\n";
-	for (i=0; i<numNodos; i++)
-	{
-		if (EscribirComo2D == true)
+	for (i=0; i<numNodos; i++) {
+		if (EscribirComo2D == true) {
 			vtk << std::setprecision(10) << nodo[i].x << " " << nodo[i].y << " " << nodo[i].capa * 1.0 << "\n";
-		else
+		} else {
 			vtk << std::setprecision(10) << nodo[i].x << " " << nodo[i].y << " " << nodo[i].z  + offsetVertical << "\n";
+		}
 	}
 	vtk << "\n";
 
 	//Celdas
 	vtk << "CELLS " << numElementos << " " << numDatos << "\n";
-	for (i=0; i<numElementos; i++)
-	{
+	for (i=0; i<numElementos; i++) {
 		vtk << elemento[i].numNodos << " " << elemento[i].nodo[0]
 									<< " " << elemento[i].nodo[1]
 									<< " " << elemento[i].nodo[2]
@@ -559,8 +536,7 @@ bool ClassMohidResult::EscribirResultadoVTK(char* archVTK, bool EscribirComo2D)
 	}
 	vtk << "\n";
 	vtk << "CELL_TYPES " << numElementos << "\n";
-	for (i=0; i<numElementos; i++)
-	{
+	for (i=0; i<numElementos; i++) {
 		vtk << "12" << "\n"; //VTK_HEXA
 	}
 	vtk << "\n";
@@ -569,8 +545,7 @@ bool ClassMohidResult::EscribirResultadoVTK(char* archVTK, bool EscribirComo2D)
 	vtk << "CELL_DATA " << numElementos << "\n";
 	//Valores de Velocidad
 	vtk << "VECTORS " << "vel" << " float" << "\n";
-	for (i=0; i<numElementos; i++)
-	{
+	for (i=0; i<numElementos; i++) {
 		vtk << u[elemento[i].capa][elemento[i].col][elemento[i].fil]
 			<< " " << v[elemento[i].capa][elemento[i].col][elemento[i].fil]
 			<< " " << w[elemento[i].capa][elemento[i].col][elemento[i].fil] << "\n";
@@ -580,65 +555,62 @@ bool ClassMohidResult::EscribirResultadoVTK(char* archVTK, bool EscribirComo2D)
 	//Valores de tirante
 	vtk << "SCALARS " << "Tirante" << " float" << "\n";
 	vtk << "LOOKUP_TABLE default" << "\n";
-	for (i=0; i<numElementos; i++)
-	{
+	for (i=0; i<numElementos; i++) {
 		vtk << z[numCapas][elemento[i].col][elemento[i].fil] - z[0][elemento[i].col][elemento[i].fil] << "\n";
 	}
 	vtk << "\n";
 
 	//Valores de campos adicionales
-	for (int nc=0; nc<listaCampos.size(); nc++)
-	{
+	for (int nc=0; nc<listaCampos.size(); nc++) {
 		vtk << "SCALARS " << listaCampos[nc] << " float" << "\n";
 		vtk << "LOOKUP_TABLE default" << "\n";
-		for (i=0; i<numElementos; i++)
+		for (i=0; i<numElementos; i++) {
 			vtk << campos[nc][elemento[i].capa][elemento[i].col][elemento[i].fil] << "\n";
+		}
 		vtk << "\n";
 	}
 
 	//Valores de salinidad
-	if (hasSalinity)
-	{
+	if (hasSalinity) {
 		vtk << "SCALARS " << "salinity" << " float" << "\n";
 		vtk << "LOOKUP_TABLE default" << "\n";
-		for (i=0; i<numElementos; i++)
+		for (i=0; i<numElementos; i++) {
 			vtk << salinity[elemento[i].capa][elemento[i].col][elemento[i].fil] << "\n";
+		}
 		vtk << "\n";
 	}
 	//Valores de densidad
-	if (hasDensity)
-	{
+	if (hasDensity) {
 		vtk << "SCALARS " << "density" << " float" << "\n";
 		vtk << "LOOKUP_TABLE default" << "\n";
-		for (i=0; i<numElementos; i++)
+		for (i=0; i<numElementos; i++) {
 			vtk << density[elemento[i].capa][elemento[i].col][elemento[i].fil] << "\n";
+		}
 		vtk << "\n";
 	}
 	//Valores de coliformes
-	if (hasColiforms)
-	{
+	if (hasColiforms) {
 		vtk << "SCALARS " << "coliforms" << " float" << "\n";
 		vtk << "LOOKUP_TABLE default" << "\n";
-		for (i=0; i<numElementos; i++)
+		for (i=0; i<numElementos; i++) {
 			vtk << coliforms[elemento[i].capa][elemento[i].col][elemento[i].fil] << "\n";
+		}
 		vtk << "\n";
 	}
 	//Valores de temperatura
-	if (hasTemperature)
-	{
+	if (hasTemperature) {
 		vtk << "SCALARS " << "temperature" << " float" << "\n";
 		vtk << "LOOKUP_TABLE default" << "\n";
-		for (i=0; i<numElementos; i++)
+		for (i=0; i<numElementos; i++) {
 			vtk << temperature[elemento[i].capa][elemento[i].col][elemento[i].fil] << "\n";
+		}
 		vtk << "\n";
 	}
 	//Valores del mapa
-	if (cargadoMapa)
-	{
+	if (cargadoMapa) {
 		vtk << "SCALARS " << "Mapa" << " float" << "\n";
 		vtk << "LOOKUP_TABLE default" << "\n";
-		for (i=0; i<numElementos; i++)
-		{
+		for (i=0; i<numElementos; i++) {
 			vtk << mapa[elemento[i].col][elemento[i].fil] << "\n";
 		}
 		vtk << "\n";
@@ -650,8 +622,9 @@ bool ClassMohidResult::EscribirResultadoVTK(char* archVTK, bool EscribirComo2D)
 	CalcularValoresEnNodos2D(batimetria, valorNodo);
 	vtk << "SCALARS " << "batimetria" << " float" << "\n";
 	vtk << "LOOKUP_TABLE default" << "\n";
-	for (i=0; i<numNodos; i++)
+	for (i=0; i<numNodos; i++) {
 		vtk << offsetVertical - valorNodo[i] << "\n";
+	}
 
 	vtk << "\n";
 
@@ -659,8 +632,9 @@ bool ClassMohidResult::EscribirResultadoVTK(char* archVTK, bool EscribirComo2D)
 	CalcularValoresEnNodos2D(nivelSuperficie, valorNodo);
 	vtk << "SCALARS " << "NivelSuperficie" << " float" << "\n";
 	vtk << "LOOKUP_TABLE default" << "\n";
-	for (i=0; i<numNodos; i++)
+	for (i=0; i<numNodos; i++) {
 		vtk << valorNodo[i] + offsetVertical << "\n";
+	}
 
 	vtk << "\n";
 
@@ -669,8 +643,9 @@ bool ClassMohidResult::EscribirResultadoVTK(char* archVTK, bool EscribirComo2D)
 	CalcularValoresEnNodos(v, valorNodo2);
 	CalcularValoresEnNodos(w, valorNodo3);
 	vtk << "VECTORS " << "vel" << " float" << "\n";
-	for (i=0; i<numNodos; i++)
+	for (i=0; i<numNodos; i++) {
 		vtk << valorNodo[i] << " " << valorNodo2[i] << " " << valorNodo3[i] << "\n";
+	}
 
 	vtk << "\n";
 	vtk.close();
@@ -693,8 +668,6 @@ bool ClassMohidResult::EscribirResultadoVTKBinario(char* archVTK, bool EscribirC
 
 	ifstream::pos_type	lastPos, newPos;
 
-
-
 	valorNodo.resize(numNodos, 0);
 	valorNodo2.resize(numNodos, 0);
 	valorNodo3.resize(numNodos, 0);
@@ -715,8 +688,7 @@ bool ClassMohidResult::EscribirResultadoVTKBinario(char* archVTK, bool EscribirC
 	vtk << "POINTS " << numNodos << " float" << "\n";
 
 	lastPos = vtk.tellp();
-	for (i=0; i<numNodos; i++)
-	{
+	for (i=0; i<numNodos; i++) {
 		dato = nodo[i].x;
 		vtk.write(reinterpret_cast<const char *>(&dato)+3,sizeof(float)/4);
 		vtk.write(reinterpret_cast<const char *>(&dato)+2,sizeof(float)/4);
@@ -733,21 +705,15 @@ bool ClassMohidResult::EscribirResultadoVTKBinario(char* archVTK, bool EscribirC
 		vtk.write(reinterpret_cast<const char *>(&dato)+1,sizeof(float)/4);
 		vtk.write(reinterpret_cast<const char *>(&dato),sizeof(float)/4);
 		newPos = vtk.tellp();
-		if (newPos-lastPos != 12)
-		{
+		if (newPos-lastPos != 12) {
 			cout << "    Mal nodo " << i << " - " << lastPos << " " << newPos << "\n";
 			return false;
 		}
 		lastPos = newPos;
-
-		/*vtk.write(reinterpret_cast<char *>(&nodo[i].x),sizeof(double));
-		vtk.write(reinterpret_cast<char *>(&nodo[i].y),sizeof(double));
-		vtk.write(reinterpret_cast<char *>(&nodo[i].z),sizeof(double));*/
 	}
 	vtk << "\n";
 	newPos = vtk.tellp();
-	if (newPos-lastPos != 1)
-	{
+	if (newPos-lastPos != 1) {
 		cout << "    Mal enter 1 " << " - " << lastPos << " " << newPos << "\n";
 		return false;
 	}
@@ -756,16 +722,14 @@ bool ClassMohidResult::EscribirResultadoVTKBinario(char* archVTK, bool EscribirC
 	//Celdas
 	vtk << "CELLS " << numElementos << " " << numDatos << "\n";
 	lastPos = vtk.tellp();
-	for (i=0; i<numElementos; i++)
-	{
+	for (i=0; i<numElementos; i++) {
 		datoInt = elemento[i].numNodos;
 		vtk.write(reinterpret_cast<const char *>(&datoInt)+3,sizeof(int)/4);
 		vtk.write(reinterpret_cast<const char *>(&datoInt)+2,sizeof(int)/4);
 		vtk.write(reinterpret_cast<const char *>(&datoInt)+1,sizeof(int)/4);
 		vtk.write(reinterpret_cast<const char *>(&datoInt),sizeof(int)/4);
 
-		for (j=0; j<8; j++)
-		{
+		for (j=0; j<8; j++) {
 			datoInt = elemento[i].nodo[j];
 			vtk.write(reinterpret_cast<const char *>(&datoInt)+3,sizeof(int)/4);
 			vtk.write(reinterpret_cast<const char *>(&datoInt)+2,sizeof(int)/4);
@@ -773,8 +737,7 @@ bool ClassMohidResult::EscribirResultadoVTKBinario(char* archVTK, bool EscribirC
 			vtk.write(reinterpret_cast<const char *>(&datoInt),sizeof(int)/4);
 		}
 		newPos = vtk.tellp();
-		if (newPos-lastPos != 36)
-		{
+		if (newPos-lastPos != 36) {
 			cout << "    Mal elemento " << i << " - " << lastPos << " " << newPos << "\n";
 			return false;
 		}
@@ -783,8 +746,7 @@ bool ClassMohidResult::EscribirResultadoVTKBinario(char* archVTK, bool EscribirC
 	vtk << "\n";
 	vtk << "CELL_TYPES " << numElementos << "\n";
 	lastPos = vtk.tellp();
-	for (i=0; i<numElementos; i++)
-	{
+	for (i=0; i<numElementos; i++) {
 		int a;
 		datoInt = 12;
 		vtk.write(reinterpret_cast<const char *>(&datoInt)+3,sizeof(int)/4);
@@ -792,8 +754,7 @@ bool ClassMohidResult::EscribirResultadoVTKBinario(char* archVTK, bool EscribirC
 		vtk.write(reinterpret_cast<const char *>(&datoInt)+1,sizeof(int)/4);
 		vtk.write(reinterpret_cast<const char *>(&datoInt),sizeof(int)/4);
 		newPos = vtk.tellp();
-		if (newPos-lastPos != 4)
-		{
+		if (newPos-lastPos != 4) {
 			cout << "    Mal cel_type " << i << " - " << lastPos << " " << newPos << "\n";
 			return false;
 		}
@@ -807,8 +768,7 @@ bool ClassMohidResult::EscribirResultadoVTKBinario(char* archVTK, bool EscribirC
 	vtk << "CELL_DATA " << numElementos << "\n";
 	//Valores de Velocidad
 	vtk << "VECTORS " << "vel" << " float" << "\n";
-	for (i=0; i<numElementos; i++)
-	{
+	for (i=0; i<numElementos; i++) {
 		//vtk << u[elemento[i].capa][elemento[i].col][elemento[i].fil]
 		//	<< " " << v[elemento[i].capa][elemento[i].col][elemento[i].fil]
 		//	<< " " << w[elemento[i].capa][elemento[i].col][elemento[i].fil] << "\n";
@@ -827,8 +787,6 @@ bool ClassMohidResult::EscribirResultadoVTKBinario(char* archVTK, bool EscribirC
 		vtk.write(reinterpret_cast<const char *>(&dato)+2,sizeof(float)/4);
 		vtk.write(reinterpret_cast<const char *>(&dato)+1,sizeof(float)/4);
 		vtk.write(reinterpret_cast<const char *>(&dato),sizeof(float)/4);
-
-
 	}
 	vtk << "\n";
 
@@ -838,8 +796,7 @@ bool ClassMohidResult::EscribirResultadoVTKBinario(char* archVTK, bool EscribirC
 	CalcularValoresEnNodos2D(batimetria, valorNodo);
 	vtk << "SCALARS " << "batimetria" << " float" << "\n";
 	vtk << "LOOKUP_TABLE default" << "\n";
-	for (i=0; i<numNodos; i++)
-	{
+	for (i=0; i<numNodos; i++) {
 		dato = valorNodo[i] + offsetVertical;
 		vtk.write(reinterpret_cast<const char *>(&dato)+3,sizeof(float)/4);
 		vtk.write(reinterpret_cast<const char *>(&dato)+2,sizeof(float)/4);
@@ -853,8 +810,7 @@ bool ClassMohidResult::EscribirResultadoVTKBinario(char* archVTK, bool EscribirC
 	CalcularValoresEnNodos2D(nivelSuperficie, valorNodo);
 	vtk << "SCALARS " << "NivelSuperficie" << " float" << "\n";
 	vtk << "LOOKUP_TABLE default" << "\n";
-	for (i=0; i<numNodos; i++)
-	{
+	for (i=0; i<numNodos; i++) {
 		dato = valorNodo[i] + offsetVertical;
 		vtk.write(reinterpret_cast<const char *>(&dato)+3,sizeof(float)/4);
 		vtk.write(reinterpret_cast<const char *>(&dato)+2,sizeof(float)/4);
@@ -865,20 +821,17 @@ bool ClassMohidResult::EscribirResultadoVTKBinario(char* archVTK, bool EscribirC
 	vtk << "\n";
 
 	//Valores de salinidad
-	if (hasSalinity)
-	{
+	if (hasSalinity) {
 		CalcularValoresEnNodos(salinity, valorNodo);
 		vtk << "SCALARS " << "salinity" << " float" << "\n";
 		vtk << "LOOKUP_TABLE default" << "\n";
-		for (i=0; i<numNodos; i++)
-		{
+		for (i=0; i<numNodos; i++) {
 			dato = valorNodo[i];
 			vtk.write(reinterpret_cast<const char *>(&dato)+3,sizeof(float)/4);
 			vtk.write(reinterpret_cast<const char *>(&dato)+2,sizeof(float)/4);
 			vtk.write(reinterpret_cast<const char *>(&dato)+1,sizeof(float)/4);
 			vtk.write(reinterpret_cast<const char *>(&dato),sizeof(float)/4);
 		}
-
 		vtk << "\n";
 		vtk << "\n";
 	}
@@ -888,8 +841,7 @@ bool ClassMohidResult::EscribirResultadoVTKBinario(char* archVTK, bool EscribirC
 	CalcularValoresEnNodos(v, valorNodo2);
 	CalcularValoresEnNodos(w, valorNodo3);
 	vtk << "VECTORS " << "vel" << " float" << "\n";
-	for (i=0; i<numNodos; i++)
-	{
+	for (i=0; i<numNodos; i++) {
 		//vtk << valorNodo[i] << " " << valorNodo2[i] << " " << valorNodo3[i] << "\n";
 		dato = valorNodo[i];
 		vtk.write(reinterpret_cast<const char *>(&dato)+3,sizeof(float)/4);
@@ -933,7 +885,6 @@ bool ClassMohidResult::EscribirResultadoGIS(int indice)
 	valorNodo3.resize(numNodos, 0);
 
 	cout << "    Escribiendo los resultados en formato del GIS..." << "\n";
-
 	{
 		DevolverNombreDataset("supLibre_", indice, nombreArchivo);
 		strcat ( nombreArchivo, ".asc");
@@ -948,20 +899,18 @@ bool ClassMohidResult::EscribirResultadoGIS(int indice)
 		surfer << "cellsize      " << x[1][0] - x[0][0]<< "\n";
 		surfer << "NODATA_value  -9999.0" << "\n";
 
-		for (int k=numFil-1; k>=0; k--)
-		{
-			for (int i=0; i<numCol; i++)
-			{
-				if (mask[0][i][k] != 0)
+		for (int k=numFil-1; k>=0; k--) {
+			for (int i=0; i<numCol; i++) {
+				if (mask[0][i][k] != 0) {
 					surfer << z[numCapas][i][k] + offsetVertical << " ";
-				else
+				} else {
 					surfer << "-9999.0" << " ";
+				}
 			}
 			surfer << "\n";
 		}
 		surfer.close();
 	}
-
 	{
 		DevolverNombreDataset("nivelFondo_", indice, nombreArchivo);
 		strcat ( nombreArchivo, ".asc");
@@ -976,20 +925,18 @@ bool ClassMohidResult::EscribirResultadoGIS(int indice)
 		surfer << "cellsize      " << x[1][0] - x[0][0]<< "\n";
 		surfer << "NODATA_value  -9999.0" << "\n";
 
-		for (int k=numFil-1; k>=0; k--)
-		{
-			for (int i=0; i<numCol; i++)
-			{
-				if (mask[0][i][k] != 0)
+		for (int k=numFil-1; k>=0; k--) {
+			for (int i=0; i<numCol; i++) {
+				if (mask[0][i][k] != 0) {
 					surfer << z[0][i][k] + offsetVertical << " ";
-				else
+				} else {
 					surfer << "-9999.0" << " ";
+				}
 			}
 			surfer << "\n";
 		}
 		surfer.close();
 	}
-
 	{
 		DevolverNombreDataset("moduloVel_", indice, nombreArchivo);
 		strcat ( nombreArchivo, ".asc");
@@ -1004,16 +951,12 @@ bool ClassMohidResult::EscribirResultadoGIS(int indice)
 		surfer << "cellsize      " << x[1][0] - x[0][0]<< "\n";
 		surfer << "NODATA_value  -9999.0" << "\n";
 
-		for (int k=numFil-1; k>=0; k--)
-		{
-			for (int i=0; i<numCol; i++)
-			{
-				if (mask[0][i][k] != 0)
-				{
+		for (int k=numFil-1; k>=0; k--) {
+			for (int i=0; i<numCol; i++) {
+				if (mask[0][i][k] != 0) {
 					double um = 0, vm = 0, wm = 0, modU = 0;
 					double tirante = 0;
-					for (int capa = 0; capa < numCapas; capa++)
-					{
+					for (int capa = 0; capa < numCapas; capa++) {
 						double dh = z[capa+1][i][k] - z[capa][i][k];
 						um += u[capa][i][k] * dh;
 						vm += v[capa][i][k] * dh;
@@ -1026,17 +969,16 @@ bool ClassMohidResult::EscribirResultadoGIS(int indice)
 					modU = sqrt(um*um+vm*vm+wm*wm);
 
 					surfer << modU << " ";
-				}
-				else
+				} else {
 					surfer << "-9999.0" << " ";
+				}
 			}
 			surfer << "\n";
 		}
 		surfer.close();
 	}
 
-	for (int nc=0; nc<listaCampos.size(); nc++)
-	{
+	for (int nc=0; nc<listaCampos.size(); nc++) {
 		DevolverNombreDataset(listaCampos[nc].data(), indice, nombreArchivo);
 		strcat ( nombreArchivo, ".asc");
 
@@ -1050,69 +992,26 @@ bool ClassMohidResult::EscribirResultadoGIS(int indice)
 		surfer << "cellsize      " << x[1][0] - x[0][0]<< "\n";
 		surfer << "NODATA_value  -9999.0" << "\n";
 
-		for (int k=numFil-1; k>=0; k--)
-		{
-			for (int i=0; i<numCol; i++)
-			{
-				if (mask[0][i][k] != 0)
-				{
+		for (int k=numFil-1; k>=0; k--) {
+			for (int i=0; i<numCol; i++) {
+				if (mask[0][i][k] != 0) {
 					double medio = 0;
 					double tirante = 0;
-					for (int capa = 0; capa < numCapas; capa++)
-					{
+					for (int capa = 0; capa < numCapas; capa++) {
 						double dh = z[capa+1][i][k] - z[capa][i][k];
 						medio += campos[nc][capa][i][k] * dh;
 						tirante += dh;
 					}
 					medio /= tirante;
 					surfer << medio << " ";
-				}
-				else
+				} else {
 					surfer << "-9999.0" << " ";
+				}
 			}
 			surfer << "\n";
 		}
 		surfer.close();
 	}
-
-	/*{
-		DevolverNombreDataset("temperature_", indice, nombreArchivo);
-		strcat ( nombreArchivo, ".asc");
-
-		cout << "\t\tEscribiendo " << nombreArchivo << "\n";
-		std::ofstream surfer(nombreArchivo);
-
-		surfer << "ncols         " << numCol << "\n";
-		surfer << "nrows         " << numFil << "\n";
-		surfer << "xllcorner     " << x[0][0] << "\n";
-		surfer << "yllcorner     " << y[0][0] << "\n";
-		surfer << "cellsize      " << x[1][0] - x[0][0]<< "\n";
-		surfer << "NODATA_value  -9999.0" << "\n";
-
-		for (int k=numFil-1; k>=0; k--)
-		{
-			for (int i=0; i<numCol; i++)
-			{
-				if (mask[0][i][k] != 0)
-				{
-					double temp = 0;
-					double tirante = 0;
-					for (int capa = 0; capa < numCapas; capa++)
-					{
-						double dh = z[capa+1][i][k] - z[capa][i][k];
-						temp += temperature[capa][i][k] * dh;
-						tirante += dh;
-					}
-					temp /= tirante;
-					surfer << temp << " ";
-				}
-				else
-					surfer << "-9999.0" << " ";
-			}
-			surfer << "\n";
-		}
-		surfer.close();
-	}*/
 
 	cout << "\tListo!" << "\n";
 
@@ -1129,19 +1028,23 @@ void ClassMohidResult::CalcularValoresEnNodos(vector<vector<vector<double> > > &
 
 	numValNodo.resize(valNodo.size(), 0);
 
-	for (i=0; i<numNodos; i++) valNodo[i]=0;
+	for (i=0; i<numNodos; i++) {
+		valNodo[i]=0;
+	}
 
-	for (i=0; i<numElementos; i++)
-		for (j=0; j<elemento[i].numNodos; j++)
-		{
+	for (i=0; i<numElementos; i++) {
+		for (j=0; j<elemento[i].numNodos; j++) {
 			valNodo[elemento[i].nodo[j]] += valElemento[elemento[i].capa][elemento[i].col][elemento[i].fil];
 			numValNodo[elemento[i].nodo[j]]++;
 		}
-	for (i=0; i<numNodos; i++)
-		if (numValNodo[i] > 0)
+	}
+	for (i=0; i<numNodos; i++) {
+		if (numValNodo[i] > 0) {
 			valNodo[i] = valNodo[i]/numValNodo[i];
-		else
+		} else {
 			valNodo[i] = 0;
+		}
+	}
 }
 
 //---------------------------------------------------------------------------------
@@ -1154,19 +1057,23 @@ void ClassMohidResult::CalcularValoresEnNodos2D(vector<vector<double> > &valElem
 
 	numValNodo.resize(valNodo.size(), 0);
 
-	for (i=0; i<numNodos; i++) valNodo[i]=0;
+	for (i=0; i<numNodos; i++) {
+		valNodo[i]=0;
+	}
 
-	for (i=0; i<numElementos; i++)
-		for (j=0; j<elemento[i].numNodos; j++)
-		{
+	for (i=0; i<numElementos; i++) {
+		for (j=0; j<elemento[i].numNodos; j++) {
 			valNodo[elemento[i].nodo[j]] += valElemento[elemento[i].col][elemento[i].fil];
 			numValNodo[elemento[i].nodo[j]]++;
 		}
-	for (i=0; i<numNodos; i++)
-		if (numValNodo[i] > 0)
+	}
+	for (i=0; i<numNodos; i++) {
+		if (numValNodo[i] > 0) {
 			valNodo[i] = valNodo[i]/numValNodo[i];
-		else
+		} else {
 			valNodo[i] = 0;
+		}
+	}
 }
 
 //---------------------------------------------------------------------------------
@@ -1178,14 +1085,15 @@ void ClassMohidResult::DevolverNombreDataset(const char *nombreBase, int indice,
 
 	strcpy ( nombreFinal, nombreBase );
 
-	if (indice < 10)
+	if (indice < 10) {
 		strcat ( nombreFinal, "0000");
-	else if (indice < 100)
+	} else if (indice < 100){
 		strcat ( nombreFinal, "000");
-	else if (indice < 1000)
+	} else if (indice < 1000){
 		strcat ( nombreFinal, "00");
-	else if (indice < 10000)
+	} else if (indice < 10000){
 		strcat ( nombreFinal, "0");
+	}
 
 	sprintf(num, "%d", indice);
 	strcat ( nombreFinal, num);
