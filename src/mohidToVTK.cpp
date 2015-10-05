@@ -118,13 +118,13 @@ int main(int argc, char* argv[])
     while (exists && step <= stepFinal) {
         MohidResults mohidResults(offset);
 
-        exists = mohidResults.loadResult(hdf5FileName1, step);
+        exists = mohidResults.loadHydrodynamicResults(hdf5FileName1, step);
         if (exists) {
             if (numFiles == 2) {
                 if (fieldsFileExists) {
                     exists = mohidResults.loadFieldsFromFieldFile( hdf5FileName2, fieldsFileName, step);
                 } else {
-                    exists = mohidResults.addResult(hdf5FileName2, step);
+                    exists = mohidResults.loadAdditionalResults(hdf5FileName2, step);
                 }
 
                 if (exists == false) break;

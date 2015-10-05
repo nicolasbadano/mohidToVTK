@@ -26,59 +26,59 @@ MohidResults::~MohidResults(void)
 }
 
 //---------------------------------------------------------------------------------
-//----------- loadResult ----------------------------------------------------------
+//----------- loadHydrodynamicResults ---------------------------------------------
 //---------------------------------------------------------------------------------
-bool MohidResults::loadResult(char* archH5, int indice)
+bool MohidResults::loadHydrodynamicResults(char* hdf5FileName, int index)
 {
     int col, row, layer;
 
-    hid_t       file_id;        //Handle del archivo
-    herr_t      status;         //Status de las funciones
-    hsize_t     dims[3];        //Dimensiones del array
-    float       *data;          //Datos
-    int         *mascara;//Mascara
+    hid_t       file_id;        // File handle
+    herr_t      status;         // Status of the functions
+    hsize_t     dims[3];        // Dimensions of the array
+    float       *data;
+    int         *maskData;
     char        datasetName[200];
 
     cout << "\n";
-    getDatasetName("", indice, datasetName);
-    cout << "Archivo " << archH5 << " - Paso " << datasetName << " -- Cargando Resultados..." << "\n";
+    getDatasetName("", index, datasetName);
+    cout << "Step " << datasetName << "- File " << hdf5FileName << " - Loading hydrodynamic results..." << "\n";
 
-    // Abrir archivo
-    file_id = H5Fopen (archH5, H5F_ACC_RDONLY, H5P_DEFAULT);
+    // Open HDF5 file
+    file_id = H5Fopen (hdf5FileName, H5F_ACC_RDONLY, H5P_DEFAULT);
 
-    // Obtener las dimensiones de la máscara
-    getDatasetName("/Grid/OpenPoints/OpenPoints_", indice, datasetName);
+    // Get mask dimensions
+    getDatasetName("/Grid/OpenPoints/OpenPoints_", index, datasetName);
     status = H5LTget_dataset_info(file_id,datasetName,dims,NULL,NULL);
     if (status == -1) return false;
     numLayers = dims[0];
     numCol = dims[1];
     numRow = dims[2];
 
-    mascara = (int *)malloc(sizeof(int)*(numCol+1)*(numRow+1)*(numLayers+1));
+    maskData = (int *)malloc(sizeof(int)*(numCol+1)*(numRow+1)*(numLayers+1));
     data = (float *)malloc(sizeof(float)*(numCol+1)*(numRow+1)*(numLayers+1));
 
-    // Leer Dataset de máscara
-    status = H5LTread_dataset_int(file_id,datasetName, mascara);
+    // Read mask data
+    status = H5LTread_dataset_int(file_id,datasetName, maskData);
 
+    // Store the mask data
     mask.resize(numLayers);
     for (layer = 0; layer < numLayers; layer++) {
         mask[layer].resize(numCol);
         for (col = 0; col < numCol; col++) {
             mask[layer][col].resize(numRow,(int)0);
             for (row = 0; row < numRow; row++) {
-                mask[layer][col][row] = mascara[layer*numCol*numRow+col*numRow+row];
+                mask[layer][col][row] = maskData[layer*numCol*numRow+col*numRow+row];
             }
         }
     }
 
-
-    // Obtener las dimensiones de ConnectionX
+    // Get ConnectionX dimensions
     status = H5LTget_dataset_info(file_id,"/Grid/ConnectionX",dims,NULL,NULL);
     if (status == -1) return false;
     if (dims[0] != numCol+1) return false;
     if (dims[1] != numRow+1) return false;
 
-    // Leer Dataset de ConnectionX
+    // Read ConnectionX dataset
     status = H5LTread_dataset_float(file_id,"/Grid/ConnectionX", data);
 
     x.resize(numCol+1);
@@ -89,14 +89,13 @@ bool MohidResults::loadResult(char* archH5, int indice)
         }
     }
 
-
-    // Obtener las dimensiones de ConnectionY
+    // Get ConnectionY dimensions
     status = H5LTget_dataset_info(file_id,"/Grid/ConnectionY",dims,NULL,NULL);
     if (status == -1) return false;
     if (dims[0] != numCol+1) return false;
     if (dims[1] != numRow+1) return false;
 
-    // Leer Dataset de ConnectionY
+    // Read ConnectionY dataset
     status = H5LTread_dataset_float(file_id,"/Grid/ConnectionY", data);
 
     y.resize(numCol+1);
@@ -108,15 +107,15 @@ bool MohidResults::loadResult(char* archH5, int indice)
     }
 
 
-    // Obtener las dimensiones de VerticalZ
-    getDatasetName("/Grid/VerticalZ/Vertical_", indice, datasetName);
+    // Get VerticalZ dimensions
+    getDatasetName("/Grid/VerticalZ/Vertical_", index, datasetName);
     status = H5LTget_dataset_info(file_id,datasetName,dims,NULL,NULL);
     if (status == -1) return false;
     if (dims[0] != numLayers+1) return false;
     if (dims[1] != numCol) return false;
     if (dims[2] != numRow) return false;
 
-    // Leer Dataset de VerticalZ
+    // Read VerticalZ dataset
     status = H5LTread_dataset_float(file_id,datasetName, data);
 
     z.resize(numLayers+1);
@@ -129,43 +128,42 @@ bool MohidResults::loadResult(char* archH5, int indice)
         }
     }
 
-    // Cargar Velocidades
-    getDatasetName("/Results/velocity U/velocity U_", indice, datasetName);
+    // Load velocities
+    getDatasetName("/Results/velocity U/velocity U_", index, datasetName);
     if (loadField3D(file_id, datasetName, u) != true) {
         return false;
     }
-    getDatasetName("/Results/velocity V/velocity V_", indice, datasetName);
+    getDatasetName("/Results/velocity V/velocity V_", index, datasetName);
     if (loadField3D(file_id, datasetName, v) != true) {
         return false;
     }
-    getDatasetName("/Results/velocity W/velocity W_", indice, datasetName);
+    getDatasetName("/Results/velocity W/velocity W_", index, datasetName);
     if (loadField3D(file_id, datasetName, w) != true) {
         return false;
     }
 
-    // Cargar bathymetry, y nivel superficial cmo arrays planos (columna, fila)
+    // Load bathymetry and surface elevations as 2D arrays
     if (loadField2D(file_id, "/Grid/Bathymetry", bathymetry) != true) {
         return false;
     }
-
-    getDatasetName("/Results/water level/water level_", indice, datasetName);
+    getDatasetName("/Results/water level/water level_", index, datasetName);
     if (loadField2D(file_id, datasetName, surfaceElevation) != true) {
         return false;
     }
 
-    //close file
+    // close file
     status = H5Fclose (file_id);
 
     delete [] data; data = NULL;
-    delete [] mascara; mascara = NULL;
+    delete [] maskData; maskData = NULL;
     return true;
 }
 
 
 //---------------------------------------------------------------------------------
-//----------- addResult -----------------------------------------------------------
+//----------- loadAdditionalResults -----------------------------------------------
 //---------------------------------------------------------------------------------
-bool MohidResults::addResult(char* archH5, int indice)
+bool MohidResults::loadAdditionalResults(char* hdf5FileName, int index)
 {
     int col, row, layer;
 
@@ -174,31 +172,28 @@ bool MohidResults::addResult(char* archH5, int indice)
     hsize_t     dims[3];            //Dimensiones del array
     char        datasetName[200];
 
-    getDatasetName("", indice, datasetName);
-    cout << "Archivo " << archH5 << " - Paso " << datasetName << " -- Cargando Resultados..." << "\n";
+    getDatasetName("", index, datasetName);
+    cout << "Step " << datasetName << "- File " << hdf5FileName << " - Loading additional results..." << "\n";
 
-    // Abrir archivo
-    file_id = H5Fopen (archH5, H5F_ACC_RDONLY, H5P_DEFAULT);
+    // Open HDF5 file
+    file_id = H5Fopen (hdf5FileName, H5F_ACC_RDONLY, H5P_DEFAULT);
 
-    // Obtener las dimensiones de la máscara
-    getDatasetName("/Grid/OpenPoints/OpenPoints_", indice, datasetName);
+    // Get mask dimensions
+    getDatasetName("/Grid/OpenPoints/OpenPoints_", index, datasetName);
     status = H5LTget_dataset_info(file_id,datasetName,dims,NULL,NULL);
     if (status == -1) return false;
     if (dims[0] != numLayers) return false;
     if (dims[1] != numCol) return false;
     if (dims[2] != numRow) return false;
 
-    // Cargar Campos de calidad
-    getDatasetName("/Results/salinity/salinity_", indice, datasetName);
+    // Load additional fields
+    getDatasetName("/Results/salinity/salinity_", index, datasetName);
     hasSalinity = loadField3D(file_id, datasetName, salinity);
-
-    getDatasetName("/Results/density/density_", indice, datasetName);
+    getDatasetName("/Results/density/density_", index, datasetName);
     hasDensity = loadField3D(file_id, datasetName, density);
-
-    getDatasetName("/Results/fecal coliforms/fecal coliforms_", indice, datasetName);
+    getDatasetName("/Results/fecal coliforms/fecal coliforms_", index, datasetName);
     hasColiforms = loadField3D(file_id, datasetName, coliforms);
-
-    getDatasetName("/Results/temperature/temperature_", indice, datasetName);
+    getDatasetName("/Results/temperature/temperature_", index, datasetName);
     hasTemperature = loadField3D(file_id, datasetName, temperature);
 
     //close file
@@ -224,7 +219,7 @@ std::vector<std::string> split(const std::string &s, char delim) {
 //---------------------------------------------------------------------------------
 //----------- loadFieldsFromFieldFile ---------------------------------------------
 //---------------------------------------------------------------------------------
-bool MohidResults::loadFieldsFromFieldFile(char* archH5, char* archCampos, int indice)
+bool MohidResults::loadFieldsFromFieldFile(char* hdf5FileName, char* fieldsFileName, int index)
 {
     int col, row, layer;
 
@@ -233,34 +228,32 @@ bool MohidResults::loadFieldsFromFieldFile(char* archH5, char* archCampos, int i
     hsize_t     dims[3];            //Dimensiones del array
     char        datasetName[200];
 
-    getDatasetName("", indice, datasetName);
-    cout << "Archivo " << archH5 << " - Paso " << datasetName << " -- Cargando Campos Adicionales..." << "\n";
+    getDatasetName("", index, datasetName);
+    cout << "Step " << datasetName << "- File " << hdf5FileName << " - Loading requested fields..." << "\n";
 
-    // Abrir archivo
-    file_id = H5Fopen (archH5, H5F_ACC_RDONLY, H5P_DEFAULT);
+    // Open HDF5 file
+    file_id = H5Fopen (hdf5FileName, H5F_ACC_RDONLY, H5P_DEFAULT);
 
-    // Obtener las dimensiones de la máscara
-    getDatasetName("/Grid/OpenPoints/OpenPoints_", indice, datasetName);
+    // Get mask dimensions
+    getDatasetName("/Grid/OpenPoints/OpenPoints_", index, datasetName);
     status = H5LTget_dataset_info(file_id,datasetName,dims,NULL,NULL);
     if (status == -1) return false;
     if (dims[0] != numLayers) return false;
     if (dims[1] != numCol) return false;
     if (dims[2] != numRow) return false;
 
-    InputFile iFile(archCampos);
+    InputFile iFile(fieldsFileName);
     std::string line;
     while (iFile.returnNextLine(line)) {
         std::stringstream sstream;
         sstream << line << "_";
-        getDatasetName(sstream.str().data(), indice, datasetName);
+        getDatasetName(sstream.str().data(), index, datasetName);
 
         fields.resize(fields.size()+1);
         bool existe = loadField3D(file_id, datasetName, fields[fields.size()-1]);
         if (existe) {
-            cout << "\tCargado campo: " << line << "\n";
-
+            cout << "\tLoading field: " << line << "\n";
             std::vector<std::string> x = split(line, '/');
-
             fieldNames.push_back(x.back());
         } else {
             fields.resize(fields.size()-1);
@@ -276,7 +269,7 @@ bool MohidResults::loadFieldsFromFieldFile(char* archH5, char* archCampos, int i
 //---------------------------------------------------------------------------------
 //----------- loadField3D ---------------------------------------------------------
 //---------------------------------------------------------------------------------
-bool MohidResults::loadField3D(hid_t    file_id, char* nombreDataset, vector<vector<vector<double> > > &vectorRes)
+bool MohidResults::loadField3D(hid_t    file_id, char* datasetName, vector<vector<vector<double> > > &outResultsVec)
 {
     int col, row, layer;
     herr_t      status;         //Status de las funciones
@@ -285,22 +278,21 @@ bool MohidResults::loadField3D(hid_t    file_id, char* nombreDataset, vector<vec
 
     data = (float *) malloc(sizeof(double) * (numRow+1) * (numCol+1) * (numLayers+1));
 
-    // Obtener las dimensiones del dataset
-    status = H5LTget_dataset_info(file_id, nombreDataset,dims,NULL,NULL);
+    // Get dataset dimensions
+    status = H5LTget_dataset_info(file_id, datasetName,dims,NULL,NULL);
     if (dims[0] != numLayers) return false;
     if (dims[1] != numCol) return false;
     if (dims[2] != numRow) return false;
 
-    // Leer Dataset
-    status = H5LTread_dataset_float(file_id,nombreDataset, data);
-
-    vectorRes.resize(numLayers);
+    // Read dataset
+    status = H5LTread_dataset_float(file_id,datasetName, data);
+    outResultsVec.resize(numLayers);
     for (layer = 0; layer < numLayers; layer++) {
-        vectorRes[layer].resize(numCol);
+        outResultsVec[layer].resize(numCol);
         for (col = 0; col < numCol; col++) {
-            vectorRes[layer][col].resize(numRow,(int)0);
+            outResultsVec[layer][col].resize(numRow,(int)0);
             for (row = 0; row < numRow; row++) {
-                vectorRes[layer][col][row] = data[layer*(numCol)*(numRow)+col*(numRow)+row];
+                outResultsVec[layer][col][row] = data[layer*(numCol)*(numRow)+col*(numRow)+row];
             }
         }
     }
@@ -313,7 +305,7 @@ bool MohidResults::loadField3D(hid_t    file_id, char* nombreDataset, vector<vec
 //---------------------------------------------------------------------------------
 //----------- loadField2D ---------------------------------------------------------
 //---------------------------------------------------------------------------------
-bool MohidResults::loadField2D(hid_t    file_id, char* nombreDataset, vector<vector<double> > &vectorRes)
+bool MohidResults::loadField2D(hid_t    file_id, char* datasetName, vector<vector<double> > &outResultsVec)
 {
     int col, row;
     herr_t      status;     //Status de las funciones
@@ -322,19 +314,18 @@ bool MohidResults::loadField2D(hid_t    file_id, char* nombreDataset, vector<vec
 
     data = (float *) malloc(sizeof(double) * (numRow+1) * (numCol+1));
 
-    // Obtener las dimensiones del dataset
-    status = H5LTget_dataset_info(file_id, nombreDataset,dims,NULL,NULL);
+    // Get dataset dimensions
+    status = H5LTget_dataset_info(file_id, datasetName,dims,NULL,NULL);
     if (dims[0] != numCol) return false;
     if (dims[1] != numRow) return false;
 
-    // Leer Dataset
-    status = H5LTread_dataset_float(file_id,nombreDataset, data);
-
-    vectorRes.resize(numCol);
+    // Read dataset
+    status = H5LTread_dataset_float(file_id,datasetName, data);
+    outResultsVec.resize(numCol);
     for (col = 0; col < numCol; col++) {
-        vectorRes[col].resize(numRow,(int)0);
+        outResultsVec[col].resize(numRow,(int)0);
         for (row = 0; row < numRow; row++) {
-            vectorRes[col][row] = data[col*(numRow)+row];
+            outResultsVec[col][row] = data[col*(numRow)+row];
         }
     }
 
@@ -346,9 +337,9 @@ bool MohidResults::loadField2D(hid_t    file_id, char* nombreDataset, vector<vec
 //---------------------------------------------------------------------------------
 //----------- loadMap -------------------------------------------------------------
 //---------------------------------------------------------------------------------
-bool MohidResults::loadMap( char* nombreMapa )
+bool MohidResults::loadMap( char* mapFileName )
 {
-    InputFile aFile( nombreMapa );
+    InputFile aFile( mapFileName );
 
     std::vector<std::string>    tagVec;
 
@@ -384,9 +375,9 @@ bool MohidResults::convertResultsToVTK(void)
     numCells = 0;
     numValues = 0;
 
-    cout << "    Convirtiendo los resultados a vtk..." << "\n";
+    cout << "\tConverting results to VTK..." << "\n";
 
-    //Crear array de número de nodes
+    // Create array with nodes indexes
     cellLLBNodeIndex.resize(numLayers+1);
     for (layer = 0; layer < numLayers+1; layer++) {
         cellLLBNodeIndex[layer].resize(numCol+1);
@@ -399,9 +390,9 @@ bool MohidResults::convertResultsToVTK(void)
         for (col=0; col<numCol-4; col++) {
             for (row=0; row<numRow-4; row++) {
                 if (mask[layer][col][row] == 1) {
-                    //Es parte del dominio
+                    // It's part of the domain
 
-                    //Crear el cell y los Nodos si hace falta
+                    // Create cell and nodes if needed
                     cell.resize(cell.size()+1);
                     cell[numCells].node[0] = createNode(layer, col, row);
                     cell[numCells].node[1] = createNode(layer, col+1, row);
@@ -431,14 +422,14 @@ int MohidResults::createNode(int layer, int col, int row)
 {
     int layerMask;
     if (layer < numLayers) {
-        // Es una layer de celdas
+        // It's a layer of cells
         layerMask = layer;
     } else {
-        // Es la layer que está por encima de la superficie libre
+        // It's the layer above the free surface
         layerMask = layer-1;
     }
     if (cellLLBNodeIndex[layer][col][row] == -1) {
-        //El node no existe --> crearlo
+        // Node doesn't exist --> create it
         double  sumaZ ;
         int     numSumaZ ;
         node.resize(node.size()+1);
@@ -447,7 +438,7 @@ int MohidResults::createNode(int layer, int col, int row)
         node[numNodes].layer = layer;
         sumaZ = 0;
         numSumaZ = 0;
-        //Calcular la coordenada Z promedio de las celdas vecinas en fias y columnas
+        // Calculate average z coordinate of the neighbouring cells in rows and cols
         if (col > 0) {
             if (mask[layerMask][col-1][row] == 1) {
                 numSumaZ++;
@@ -477,7 +468,7 @@ int MohidResults::createNode(int layer, int col, int row)
         numNodes++;
         return numNodes-1;
     } else {
-        //El node existe
+        // Node exists
         return cellLLBNodeIndex[layer][col][row];
     }
 }
@@ -485,32 +476,30 @@ int MohidResults::createNode(int layer, int col, int row)
 //---------------------------------------------------------------------------------
 //----------- writeResultsVTK -----------------------------------------------------
 //---------------------------------------------------------------------------------
-bool MohidResults::writeResultsVTK(char* archVTK, bool EscribirComo2D)
+bool MohidResults::writeResultsVTK(char* vtkFileName, bool writeAs2D)
 {
-    int                 i;
-    vector<double>      valorNodo;
-    vector<double>      valorNodo2;
-    vector<double>      valorNodo3;
+    vector<double>      nodeValues;
+    vector<double>      nodeValues2;
+    vector<double>      nodeValues3;
+    nodeValues.resize(numNodes, 0);
+    nodeValues2.resize(numNodes, 0);
+    nodeValues3.resize(numNodes, 0);
 
-    valorNodo.resize(numNodes, 0);
-    valorNodo2.resize(numNodes, 0);
-    valorNodo3.resize(numNodes, 0);
-
-    cout << "    Escribiendo los resultados en el archivo vtk..." << "\n";
+    cout << "\tWriting VTK file: " << vtkFileName << "\n";
 
     // open file for output
-    ofstream vtk(archVTK);
+    ofstream vtk(vtkFileName);
 
-    //Encabezado
+    // Header
     vtk << "# vtk DataFile Version 2.0" << "\n";
-    vtk << archVTK << ", Created by Gmsh" << "\n";
+    vtk << vtkFileName << ", Created by Gmsh" << "\n";
     vtk << "ASCII" << "\n";
     vtk << "DATASET UNSTRUCTURED_GRID" << "\n";
 
-    //Nodos
+    // nodes
     vtk << "POINTS " << numNodes << " double" << "\n";
-    for (i=0; i<numNodes; i++) {
-        if (EscribirComo2D == true) {
+    for (int i=0; i<numNodes; i++) {
+        if (writeAs2D == true) {
             vtk << std::setprecision(10) << node[i].x << " " << node[i].y << " " << node[i].layer * 1.0 << "\n";
         } else {
             vtk << std::setprecision(10) << node[i].x << " " << node[i].y << " " << node[i].z  + verticalOffset << "\n";
@@ -518,9 +507,9 @@ bool MohidResults::writeResultsVTK(char* archVTK, bool EscribirComo2D)
     }
     vtk << "\n";
 
-    //Celdas
+    // cells
     vtk << "CELLS " << numCells << " " << numValues << "\n";
-    for (i=0; i<numCells; i++) {
+    for (int i=0; i<numCells; i++) {
         vtk << cell[i].numNodes << " " << cell[i].node[0]
                                     << " " << cell[i].node[1]
                                     << " " << cell[i].node[2]
@@ -532,16 +521,16 @@ bool MohidResults::writeResultsVTK(char* archVTK, bool EscribirComo2D)
     }
     vtk << "\n";
     vtk << "CELL_TYPES " << numCells << "\n";
-    for (i=0; i<numCells; i++) {
+    for (int i=0; i<numCells; i++) {
         vtk << "12" << "\n"; //VTK_HEXA
     }
     vtk << "\n";
 
-    //Valores en Celdas --------------------------------------
+    // Cell values  --------------------------------------
     vtk << "CELL_DATA " << numCells << "\n";
-    //Valores de Velocidad
+    // Velocity values
     vtk << "VECTORS " << "vel" << " float" << "\n";
-    for (i=0; i<numCells; i++) {
+    for (int i=0; i<numCells; i++) {
         vtk << u[cell[i].layer][cell[i].col][cell[i].row]
             << " " << v[cell[i].layer][cell[i].col][cell[i].row]
             << " " << w[cell[i].layer][cell[i].col][cell[i].row] << "\n";
@@ -551,7 +540,7 @@ bool MohidResults::writeResultsVTK(char* archVTK, bool EscribirComo2D)
     //Valores de tirante
     vtk << "SCALARS " << "Tirante" << " float" << "\n";
     vtk << "LOOKUP_TABLE default" << "\n";
-    for (i=0; i<numCells; i++) {
+    for (int i=0; i<numCells; i++) {
         vtk << z[numLayers][cell[i].col][cell[i].row] - z[0][cell[i].col][cell[i].row] << "\n";
     }
     vtk << "\n";
@@ -560,93 +549,92 @@ bool MohidResults::writeResultsVTK(char* archVTK, bool EscribirComo2D)
     for (int nc=0; nc<fieldNames.size(); nc++) {
         vtk << "SCALARS " << fieldNames[nc] << " float" << "\n";
         vtk << "LOOKUP_TABLE default" << "\n";
-        for (i=0; i<numCells; i++) {
+        for (int i=0; i<numCells; i++) {
             vtk << fields[nc][cell[i].layer][cell[i].col][cell[i].row] << "\n";
         }
         vtk << "\n";
     }
 
-    //Valores de salinidad
+    // salinity
     if (hasSalinity) {
         vtk << "SCALARS " << "salinity" << " float" << "\n";
         vtk << "LOOKUP_TABLE default" << "\n";
-        for (i=0; i<numCells; i++) {
+        for (int i=0; i<numCells; i++) {
             vtk << salinity[cell[i].layer][cell[i].col][cell[i].row] << "\n";
         }
         vtk << "\n";
     }
-    //Valores de densidad
+    // density
     if (hasDensity) {
         vtk << "SCALARS " << "density" << " float" << "\n";
         vtk << "LOOKUP_TABLE default" << "\n";
-        for (i=0; i<numCells; i++) {
+        for (int i=0; i<numCells; i++) {
             vtk << density[cell[i].layer][cell[i].col][cell[i].row] << "\n";
         }
         vtk << "\n";
     }
-    //Valores de coliformes
+    // coliforms
     if (hasColiforms) {
         vtk << "SCALARS " << "coliforms" << " float" << "\n";
         vtk << "LOOKUP_TABLE default" << "\n";
-        for (i=0; i<numCells; i++) {
+        for (int i=0; i<numCells; i++) {
             vtk << coliforms[cell[i].layer][cell[i].col][cell[i].row] << "\n";
         }
         vtk << "\n";
     }
-    //Valores de temperatura
+    // temperature
     if (hasTemperature) {
         vtk << "SCALARS " << "temperature" << " float" << "\n";
         vtk << "LOOKUP_TABLE default" << "\n";
-        for (i=0; i<numCells; i++) {
+        for (int i=0; i<numCells; i++) {
             vtk << temperature[cell[i].layer][cell[i].col][cell[i].row] << "\n";
         }
         vtk << "\n";
     }
-    //Valores del map
+    // map values
     if (mapIsLoaded) {
-        vtk << "SCALARS " << "Mapa" << " float" << "\n";
+        vtk << "SCALARS " << "map" << " float" << "\n";
         vtk << "LOOKUP_TABLE default" << "\n";
-        for (i=0; i<numCells; i++) {
+        for (int i=0; i<numCells; i++) {
             vtk << map[cell[i].col][cell[i].row] << "\n";
         }
         vtk << "\n";
     }
 
-    // Valores en Nodos --------------------------------------
+    // Node values --------------------------------------
     vtk << "POINT_DATA " << numNodes << "\n";
-    //Valores de bathymetry
-    calculateNodeValues2D(bathymetry, valorNodo);
+    // bathymetry
+    calculateNodeValues2D(bathymetry, nodeValues);
     vtk << "SCALARS " << "bathymetry" << " float" << "\n";
     vtk << "LOOKUP_TABLE default" << "\n";
-    for (i=0; i<numNodes; i++) {
-        vtk << verticalOffset - valorNodo[i] << "\n";
+    for (int i=0; i<numNodes; i++) {
+        vtk << verticalOffset - nodeValues[i] << "\n";
     }
 
     vtk << "\n";
 
-    //Valores de nivel de agua
-    calculateNodeValues2D(surfaceElevation, valorNodo);
+    // surface elevation
+    calculateNodeValues2D(surfaceElevation, nodeValues);
     vtk << "SCALARS " << "surfaceElevation" << " float" << "\n";
     vtk << "LOOKUP_TABLE default" << "\n";
-    for (i=0; i<numNodes; i++) {
-        vtk << valorNodo[i] + verticalOffset << "\n";
+    for (int i=0; i<numNodes; i++) {
+        vtk << nodeValues[i] + verticalOffset << "\n";
     }
 
     vtk << "\n";
 
-    //Valores de Velocidad
-    calculateNodeValues(u, valorNodo);
-    calculateNodeValues(v, valorNodo2);
-    calculateNodeValues(w, valorNodo3);
+    // Velocity values
+    calculateNodeValues(u, nodeValues);
+    calculateNodeValues(v, nodeValues2);
+    calculateNodeValues(w, nodeValues3);
     vtk << "VECTORS " << "vel" << " float" << "\n";
-    for (i=0; i<numNodes; i++) {
-        vtk << valorNodo[i] << " " << valorNodo2[i] << " " << valorNodo3[i] << "\n";
+    for (int i=0; i<numNodes; i++) {
+        vtk << nodeValues[i] << " " << nodeValues2[i] << " " << nodeValues3[i] << "\n";
     }
 
     vtk << "\n";
     vtk.close();
 
-    cout << "    Listo!" << "\n";
 
     return true;
 }
@@ -654,37 +642,37 @@ bool MohidResults::writeResultsVTK(char* archVTK, bool EscribirComo2D)
 //---------------------------------------------------------------------------------
 //----------- writeResultsVTKBinary -----------------------------------------------
 //---------------------------------------------------------------------------------
-bool MohidResults::writeResultsVTKBinary(char* archVTK, bool EscribirComo2D)
+bool MohidResults::writeResultsVTKBinary(char* vtkFileName, bool writeAs2D)
 {
-    int                 i,j,datoInt;
+    int                 j,datoInt;
     float               dato;
-    vector<double>      valorNodo;
-    vector<double>      valorNodo2;
-    vector<double>      valorNodo3;
+    vector<double>      nodeValues;
+    vector<double>      nodeValues2;
+    vector<double>      nodeValues3;
 
     ifstream::pos_type  lastPos, newPos;
 
-    valorNodo.resize(numNodes, 0);
-    valorNodo2.resize(numNodes, 0);
-    valorNodo3.resize(numNodes, 0);
+    nodeValues.resize(numNodes, 0);
+    nodeValues2.resize(numNodes, 0);
+    nodeValues3.resize(numNodes, 0);
 
-    cout << "    Escribiendo los resultados en el archivo vtk..." << "\n";
+    cout << "\tWriting VTK file: " << vtkFileName << "\n";
 
     // open file for output
-    ofstream vtk(archVTK, ios::out | ios::binary);
+    ofstream vtk(vtkFileName, ios::out | ios::binary);
 
-    //Encabezado
+    // Header
     vtk << "# vtk DataFile Version 2.0" << "\n";
-    vtk << archVTK << ", Created by Gmsh" << "\n";
+    vtk << vtkFileName << ", Created by Gmsh" << "\n";
     vtk << "BINARY" << "\n";
     vtk << "DATASET UNSTRUCTURED_GRID" << "\n";
 
     cout << sizeof(int) << sizeof(float) << sizeof(double);
-    //Nodos
+    // nodes
     vtk << "POINTS " << numNodes << " float" << "\n";
 
     lastPos = vtk.tellp();
-    for (i=0; i<numNodes; i++) {
+    for (int i=0; i<numNodes; i++) {
         dato = node[i].x;
         vtk.write(reinterpret_cast<const char *>(&dato)+3,sizeof(float)/4);
         vtk.write(reinterpret_cast<const char *>(&dato)+2,sizeof(float)/4);
@@ -702,30 +690,24 @@ bool MohidResults::writeResultsVTKBinary(char* archVTK, bool EscribirComo2D)
         vtk.write(reinterpret_cast<const char *>(&dato),sizeof(float)/4);
         newPos = vtk.tellp();
         if (newPos-lastPos != 12) {
-            cout << "    Mal node " << i << " - " << lastPos << " " << newPos << "\n";
+            cout << "\t\tERROR: Wrong node " << i << " - " << lastPos << " " << newPos << "\n";
             return false;
         }
         lastPos = newPos;
     }
     vtk << "\n";
-    newPos = vtk.tellp();
-    if (newPos-lastPos != 1) {
-        cout << "    Mal enter 1 " << " - " << lastPos << " " << newPos << "\n";
-        return false;
-    }
-    lastPos = newPos;
 
-    //Celdas
+    // cells
     vtk << "CELLS " << numCells << " " << numValues << "\n";
     lastPos = vtk.tellp();
-    for (i=0; i<numCells; i++) {
+    for (int i=0; i<numCells; i++) {
         datoInt = cell[i].numNodes;
         vtk.write(reinterpret_cast<const char *>(&datoInt)+3,sizeof(int)/4);
         vtk.write(reinterpret_cast<const char *>(&datoInt)+2,sizeof(int)/4);
         vtk.write(reinterpret_cast<const char *>(&datoInt)+1,sizeof(int)/4);
         vtk.write(reinterpret_cast<const char *>(&datoInt),sizeof(int)/4);
 
-        for (j=0; j<8; j++) {
+        for (int j=0; j<8; j++) {
             datoInt = cell[i].node[j];
             vtk.write(reinterpret_cast<const char *>(&datoInt)+3,sizeof(int)/4);
             vtk.write(reinterpret_cast<const char *>(&datoInt)+2,sizeof(int)/4);
@@ -734,7 +716,7 @@ bool MohidResults::writeResultsVTKBinary(char* archVTK, bool EscribirComo2D)
         }
         newPos = vtk.tellp();
         if (newPos-lastPos != 36) {
-            cout << "    Mal cell " << i << " - " << lastPos << " " << newPos << "\n";
+            cout << "\t\tERROR: Wrong cell " << i << " - " << lastPos << " " << newPos << "\n";
             return false;
         }
         lastPos = newPos;
@@ -742,7 +724,7 @@ bool MohidResults::writeResultsVTKBinary(char* archVTK, bool EscribirComo2D)
     vtk << "\n";
     vtk << "CELL_TYPES " << numCells << "\n";
     lastPos = vtk.tellp();
-    for (i=0; i<numCells; i++) {
+    for (int i=0; i<numCells; i++) {
         int a;
         datoInt = 12;
         vtk.write(reinterpret_cast<const char *>(&datoInt)+3,sizeof(int)/4);
@@ -751,7 +733,7 @@ bool MohidResults::writeResultsVTKBinary(char* archVTK, bool EscribirComo2D)
         vtk.write(reinterpret_cast<const char *>(&datoInt),sizeof(int)/4);
         newPos = vtk.tellp();
         if (newPos-lastPos != 4) {
-            cout << "    Mal cel_type " << i << " - " << lastPos << " " << newPos << "\n";
+            cout << "\t\tERROR: Wrong cel_type " << i << " - " << lastPos << " " << newPos << "\n";
             return false;
         }
         lastPos = newPos;
@@ -760,11 +742,11 @@ bool MohidResults::writeResultsVTKBinary(char* archVTK, bool EscribirComo2D)
     vtk << "\n";
 
 
-    //Valores en Celdas --------------------------------------
+    // Cell values  --------------------------------------
     vtk << "CELL_DATA " << numCells << "\n";
-    //Valores de Velocidad
+    // Velocity values
     vtk << "VECTORS " << "vel" << " float" << "\n";
-    for (i=0; i<numCells; i++) {
+    for (int i=0; i<numCells; i++) {
         //vtk << u[cell[i].layer][cell[i].col][cell[i].row]
         //  << " " << v[cell[i].layer][cell[i].col][cell[i].row]
         //  << " " << w[cell[i].layer][cell[i].col][cell[i].row] << "\n";
@@ -786,14 +768,14 @@ bool MohidResults::writeResultsVTKBinary(char* archVTK, bool EscribirComo2D)
     }
     vtk << "\n";
 
-    // Valores en Nodos --------------------------------------
+    // Node values --------------------------------------
     vtk << "POINT_DATA " << numNodes << "\n";
-    //Valores de bathymetry
-    calculateNodeValues2D(bathymetry, valorNodo);
+    // bathymetry
+    calculateNodeValues2D(bathymetry, nodeValues);
     vtk << "SCALARS " << "bathymetry" << " float" << "\n";
     vtk << "LOOKUP_TABLE default" << "\n";
-    for (i=0; i<numNodes; i++) {
-        dato = valorNodo[i] + verticalOffset;
+    for (int i=0; i<numNodes; i++) {
+        dato = nodeValues[i] + verticalOffset;
         vtk.write(reinterpret_cast<const char *>(&dato)+3,sizeof(float)/4);
         vtk.write(reinterpret_cast<const char *>(&dato)+2,sizeof(float)/4);
         vtk.write(reinterpret_cast<const char *>(&dato)+1,sizeof(float)/4);
@@ -802,12 +784,12 @@ bool MohidResults::writeResultsVTKBinary(char* archVTK, bool EscribirComo2D)
     vtk << "\n";
     vtk << "\n";
 
-    //Valores de nivel de agua
-    calculateNodeValues2D(surfaceElevation, valorNodo);
+    // surface elevation
+    calculateNodeValues2D(surfaceElevation, nodeValues);
     vtk << "SCALARS " << "surfaceElevation" << " float" << "\n";
     vtk << "LOOKUP_TABLE default" << "\n";
-    for (i=0; i<numNodes; i++) {
-        dato = valorNodo[i] + verticalOffset;
+    for (int i=0; i<numNodes; i++) {
+        dato = nodeValues[i] + verticalOffset;
         vtk.write(reinterpret_cast<const char *>(&dato)+3,sizeof(float)/4);
         vtk.write(reinterpret_cast<const char *>(&dato)+2,sizeof(float)/4);
         vtk.write(reinterpret_cast<const char *>(&dato)+1,sizeof(float)/4);
@@ -816,13 +798,13 @@ bool MohidResults::writeResultsVTKBinary(char* archVTK, bool EscribirComo2D)
     vtk << "\n";
     vtk << "\n";
 
-    //Valores de salinidad
+    // salinity
     if (hasSalinity) {
-        calculateNodeValues(salinity, valorNodo);
+        calculateNodeValues(salinity, nodeValues);
         vtk << "SCALARS " << "salinity" << " float" << "\n";
         vtk << "LOOKUP_TABLE default" << "\n";
-        for (i=0; i<numNodes; i++) {
-            dato = valorNodo[i];
+        for (int i=0; i<numNodes; i++) {
+            dato = nodeValues[i];
             vtk.write(reinterpret_cast<const char *>(&dato)+3,sizeof(float)/4);
             vtk.write(reinterpret_cast<const char *>(&dato)+2,sizeof(float)/4);
             vtk.write(reinterpret_cast<const char *>(&dato)+1,sizeof(float)/4);
@@ -832,24 +814,24 @@ bool MohidResults::writeResultsVTKBinary(char* archVTK, bool EscribirComo2D)
         vtk << "\n";
     }
 
-    //Valores de Velocidad
-    calculateNodeValues(u, valorNodo);
-    calculateNodeValues(v, valorNodo2);
-    calculateNodeValues(w, valorNodo3);
+    // Velocity values
+    calculateNodeValues(u, nodeValues);
+    calculateNodeValues(v, nodeValues2);
+    calculateNodeValues(w, nodeValues3);
     vtk << "VECTORS " << "vel" << " float" << "\n";
-    for (i=0; i<numNodes; i++) {
-        //vtk << valorNodo[i] << " " << valorNodo2[i] << " " << valorNodo3[i] << "\n";
-        dato = valorNodo[i];
+    for (int i=0; i<numNodes; i++) {
+        //vtk << nodeValues[i] << " " << nodeValues2[i] << " " << nodeValues3[i] << "\n";
+        dato = nodeValues[i];
         vtk.write(reinterpret_cast<const char *>(&dato)+3,sizeof(float)/4);
         vtk.write(reinterpret_cast<const char *>(&dato)+2,sizeof(float)/4);
         vtk.write(reinterpret_cast<const char *>(&dato)+1,sizeof(float)/4);
         vtk.write(reinterpret_cast<const char *>(&dato),sizeof(float)/4);
-        dato = valorNodo2[i];
+        dato = nodeValues2[i];
         vtk.write(reinterpret_cast<const char *>(&dato)+3,sizeof(float)/4);
         vtk.write(reinterpret_cast<const char *>(&dato)+2,sizeof(float)/4);
         vtk.write(reinterpret_cast<const char *>(&dato)+1,sizeof(float)/4);
         vtk.write(reinterpret_cast<const char *>(&dato),sizeof(float)/4);
-        dato = valorNodo3[i];
+        dato = nodeValues3[i];
         vtk.write(reinterpret_cast<const char *>(&dato)+3,sizeof(float)/4);
         vtk.write(reinterpret_cast<const char *>(&dato)+2,sizeof(float)/4);
         vtk.write(reinterpret_cast<const char *>(&dato)+1,sizeof(float)/4);
@@ -859,7 +841,6 @@ bool MohidResults::writeResultsVTKBinary(char* archVTK, bool EscribirComo2D)
     vtk << "\n";
     vtk.close();
 
-    cout << "    Listo!" << "\n";
 
     return true;
 }
@@ -868,25 +849,24 @@ bool MohidResults::writeResultsVTKBinary(char* archVTK, bool EscribirComo2D)
 //---------------------------------------------------------------------------------
 //----------- writeResultsASC -----------------------------------------------------
 //---------------------------------------------------------------------------------
-bool MohidResults::writeResultsASC(int indice)
+bool MohidResults::writeResultsASC(int index)
 {
-    char                nombreArchivo[500];
+    char                fileName[500];
 
-    vector<double>      valorNodo;
-    vector<double>      valorNodo2;
-    vector<double>      valorNodo3;
+    vector<double>      nodeValues;
+    vector<double>      nodeValues2;
+    vector<double>      nodeValues3;
 
-    valorNodo.resize(numNodes, 0);
-    valorNodo2.resize(numNodes, 0);
-    valorNodo3.resize(numNodes, 0);
+    nodeValues.resize(numNodes, 0);
+    nodeValues2.resize(numNodes, 0);
+    nodeValues3.resize(numNodes, 0);
 
-    cout << "    Escribiendo los resultados en formato del GIS..." << "\n";
     {
-        getDatasetName("supLibre_", indice, nombreArchivo);
-        strcat ( nombreArchivo, ".asc");
+        getDatasetName("surfaceElev_", index, fileName);
+        strcat ( fileName, ".asc");
 
-        cout << "\t\tEscribiendo " << nombreArchivo << "\n";
-        std::ofstream surfer(nombreArchivo);
+        cout << "\tWriting VTK file: " << fileName << "\n";
+        std::ofstream surfer(fileName);
 
         surfer << "ncols         " << numCol << "\n";
         surfer << "nrows         " << numRow << "\n";
@@ -908,11 +888,11 @@ bool MohidResults::writeResultsASC(int indice)
         surfer.close();
     }
     {
-        getDatasetName("nivelFondo_", indice, nombreArchivo);
-        strcat ( nombreArchivo, ".asc");
+        getDatasetName("bottomElev_", index, fileName);
+        strcat ( fileName, ".asc");
 
-        cout << "\t\tEscribiendo " << nombreArchivo << "\n";
-        std::ofstream surfer(nombreArchivo);
+        cout << "\tWriting VTK file: " << fileName << "\n";
+        std::ofstream surfer(fileName);
 
         surfer << "ncols         " << numCol << "\n";
         surfer << "nrows         " << numRow << "\n";
@@ -934,11 +914,11 @@ bool MohidResults::writeResultsASC(int indice)
         surfer.close();
     }
     {
-        getDatasetName("moduloVel_", indice, nombreArchivo);
-        strcat ( nombreArchivo, ".asc");
+        getDatasetName("velociy_", index, fileName);
+        strcat ( fileName, ".asc");
 
-        cout << "\t\tEscribiendo " << nombreArchivo << "\n";
-        std::ofstream surfer(nombreArchivo);
+        cout << "\tWriting VTK file: " << fileName << "\n";
+        std::ofstream surfer(fileName);
 
         surfer << "ncols         " << numCol << "\n";
         surfer << "nrows         " << numRow << "\n";
@@ -975,11 +955,11 @@ bool MohidResults::writeResultsASC(int indice)
     }
 
     for (int nc=0; nc<fieldNames.size(); nc++) {
-        getDatasetName(fieldNames[nc].data(), indice, nombreArchivo);
-        strcat ( nombreArchivo, ".asc");
+        getDatasetName(fieldNames[nc].data(), index, fileName);
+        strcat ( fileName, ".asc");
 
-        cout << "\t\tEscribiendo " << nombreArchivo << "\n";
-        std::ofstream surfer(nombreArchivo);
+        cout << "\tWriting VTK file: " << fileName << "\n";
+        std::ofstream surfer(fileName);
 
         surfer << "ncols         " << numCol << "\n";
         surfer << "nrows         " << numRow << "\n";
@@ -1009,7 +989,6 @@ bool MohidResults::writeResultsASC(int indice)
         surfer.close();
     }
 
-    cout << "\tListo!" << "\n";
 
     return true;
 }
@@ -1017,28 +996,27 @@ bool MohidResults::writeResultsASC(int indice)
 //---------------------------------------------------------------------------------
 //----------- calculateNodeValues -------------------------------------------------
 //---------------------------------------------------------------------------------
-void MohidResults::calculateNodeValues(vector<vector<vector<double> > > &valElemento, vector<double> &valNodo)
+void MohidResults::calculateNodeValues(vector<vector<vector<double> > > &inCellValues, vector<double> &outNodeValues)
 {
-    int                 i, j;
-    vector<int>         numValNodo;
+    vector<int>         numNodeValues;
 
-    numValNodo.resize(valNodo.size(), 0);
+    numNodeValues.resize(outNodeValues.size(), 0);
 
-    for (i=0; i<numNodes; i++) {
-        valNodo[i]=0;
+    for (int i=0; i<numNodes; i++) {
+        outNodeValues[i]=0;
     }
 
-    for (i=0; i<numCells; i++) {
-        for (j=0; j<cell[i].numNodes; j++) {
-            valNodo[cell[i].node[j]] += valElemento[cell[i].layer][cell[i].col][cell[i].row];
-            numValNodo[cell[i].node[j]]++;
+    for (int i=0; i<numCells; i++) {
+        for (int j=0; j<cell[i].numNodes; j++) {
+            outNodeValues[cell[i].node[j]] += inCellValues[cell[i].layer][cell[i].col][cell[i].row];
+            numNodeValues[cell[i].node[j]]++;
         }
     }
-    for (i=0; i<numNodes; i++) {
-        if (numValNodo[i] > 0) {
-            valNodo[i] = valNodo[i]/numValNodo[i];
+    for (int i=0; i<numNodes; i++) {
+        if (numNodeValues[i] > 0) {
+            outNodeValues[i] = outNodeValues[i]/numNodeValues[i];
         } else {
-            valNodo[i] = 0;
+            outNodeValues[i] = 0;
         }
     }
 }
@@ -1046,28 +1024,27 @@ void MohidResults::calculateNodeValues(vector<vector<vector<double> > > &valElem
 //---------------------------------------------------------------------------------
 //----------- calculateNodeValues2D -----------------------------------------------
 //---------------------------------------------------------------------------------
-void MohidResults::calculateNodeValues2D(vector<vector<double> > &valElemento, vector<double> &valNodo)
+void MohidResults::calculateNodeValues2D(vector<vector<double> > &inCellValues, vector<double> &outNodeValues)
 {
-    int                 i, j;
-    vector<int>         numValNodo;
+    vector<int>         numNodeValues;
 
-    numValNodo.resize(valNodo.size(), 0);
+    numNodeValues.resize(outNodeValues.size(), 0);
 
-    for (i=0; i<numNodes; i++) {
-        valNodo[i]=0;
+    for (int i=0; i<numNodes; i++) {
+        outNodeValues[i]=0;
     }
 
-    for (i=0; i<numCells; i++) {
-        for (j=0; j<cell[i].numNodes; j++) {
-            valNodo[cell[i].node[j]] += valElemento[cell[i].col][cell[i].row];
-            numValNodo[cell[i].node[j]]++;
+    for (int i=0; i<numCells; i++) {
+        for (int j=0; j<cell[i].numNodes; j++) {
+            outNodeValues[cell[i].node[j]] += inCellValues[cell[i].col][cell[i].row];
+            numNodeValues[cell[i].node[j]]++;
         }
     }
-    for (i=0; i<numNodes; i++) {
-        if (numValNodo[i] > 0) {
-            valNodo[i] = valNodo[i]/numValNodo[i];
+    for (int i=0; i<numNodes; i++) {
+        if (numNodeValues[i] > 0) {
+            outNodeValues[i] = outNodeValues[i]/numNodeValues[i];
         } else {
-            valNodo[i] = 0;
+            outNodeValues[i] = 0;
         }
     }
 }
@@ -1075,23 +1052,23 @@ void MohidResults::calculateNodeValues2D(vector<vector<double> > &valElemento, v
 //---------------------------------------------------------------------------------
 //----------- getDatasetName ------------------------------------------------------
 //---------------------------------------------------------------------------------
-void MohidResults::getDatasetName(const char *nombreBase, int indice, char *nombreFinal)
+void MohidResults::getDatasetName(const char *baseName, int index, char *finalNameBfr)
 {
     char            num[10];
 
-    strcpy ( nombreFinal, nombreBase );
+    strcpy ( finalNameBfr, baseName );
 
-    if (indice < 10) {
-        strcat ( nombreFinal, "0000");
-    } else if (indice < 100){
-        strcat ( nombreFinal, "000");
-    } else if (indice < 1000){
-        strcat ( nombreFinal, "00");
-    } else if (indice < 10000){
-        strcat ( nombreFinal, "0");
+    if (index < 10) {
+        strcat ( finalNameBfr, "0000");
+    } else if (index < 100){
+        strcat ( finalNameBfr, "000");
+    } else if (index < 1000){
+        strcat ( finalNameBfr, "00");
+    } else if (index < 10000){
+        strcat ( finalNameBfr, "0");
     }
 
-    sprintf(num, "%d", indice);
-    strcat ( nombreFinal, num);
+    sprintf(num, "%d", index);
+    strcat ( finalNameBfr, num);
     return;
 }

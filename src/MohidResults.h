@@ -89,22 +89,22 @@ public:
     MohidResults(double offset);
     ~MohidResults(void);
 
-    bool loadResult(char* archHDF5, int indice);
-    bool addResult(char* archHDF5, int indice);
-    bool loadFieldsFromFieldFile(char* archH5, char* archCampos, int indice);
+    bool loadHydrodynamicResults(char* hdf5FileName, int index);
+    bool loadAdditionalResults(char* hdf5FileName, int index);
+    bool loadFieldsFromFieldFile(char* hdf5FileName, char* fieldsFileName, int index);
 
-    bool loadField3D(hid_t file_id, char* nombreDataset, vector<vector<vector<double> > > &vectorRes);
-    bool loadField2D(hid_t file_id, char* nombreDataset, vector<vector<double> > &vectorRes);
+    bool loadField3D(hid_t file_id, char* datasetName, vector<vector<vector<double> > > &outResultsVec);
+    bool loadField2D(hid_t file_id, char* datasetName, vector<vector<double> > &outResultsVec);
     bool loadMap(char* archMapa);
     bool convertResultsToVTK(void);
-    void calculateNodeValues(vector<vector<vector<double> > > &valElemento, vector<double> &valNodo);
-    void calculateNodeValues2D(vector<vector<double> > &valElemento, vector<double> &valNodo);
+    void calculateNodeValues(vector<vector<vector<double> > > &inCellValues, vector<double> &outNodeValues);
+    void calculateNodeValues2D(vector<vector<double> > &inCellValues, vector<double> &outNodeValues);
 
-    void getDatasetName(const char *nombreBase, int indice, char *nombreFinal);
+    void getDatasetName(const char *baseName, int index, char *finalNameBfr);
 
     int  createNode(int layer, int col, int row);
 
-    bool writeResultsVTK(char* archVTK, bool EscribirComo2D);
-    bool writeResultsVTKBinary(char* archVTK, bool EscribirComo2D);
-    bool writeResultsASC(int indice);
+    bool writeResultsVTK(char* vtkFileName, bool writeAs2D);
+    bool writeResultsVTKBinary(char* vtkFileName, bool writeAs2D);
+    bool writeResultsASC(int index);
 };
