@@ -17,10 +17,10 @@ MohidResults::MohidResults(double offset)
 
 	campos.reserve(5);
 
-	hasSalinity=false;
-	hasDensity=false;
-	hasColiforms=false;
-	hasTemperature=false;
+	hasSalinity = false;
+	hasDensity = false;
+	hasColiforms = false;
+	hasTemperature = false;
 }
 
 MohidResults::~MohidResults(void)
@@ -28,9 +28,9 @@ MohidResults::~MohidResults(void)
 }
 
 //---------------------------------------------------------------------------------
-//----------- CargarResultado -----------------------------------------------------
+//----------- loadResult ----------------------------------------------------------
 //---------------------------------------------------------------------------------
-bool MohidResults::CargarResultado(char* archH5, int indice)
+bool MohidResults::loadResult(char* archH5, int indice)
 {
 	int col, fil, capa;
 
@@ -41,17 +41,15 @@ bool MohidResults::CargarResultado(char* archH5, int indice)
 	int			*mascara;//Mascara
 	char		datasetName[200];
 
-
-
 	cout << "\n";
-	DevolverNombreDataset("", indice, datasetName);
+	getDatasetName("", indice, datasetName);
 	cout << "Archivo " << archH5 << " - Paso " << datasetName << " -- Cargando Resultados..." << "\n";
 
 	// Abrir archivo
 	file_id = H5Fopen (archH5, H5F_ACC_RDONLY, H5P_DEFAULT);
 
 	// Obtener las dimensiones de la máscara
-	DevolverNombreDataset("/Grid/OpenPoints/OpenPoints_", indice, datasetName);
+	getDatasetName("/Grid/OpenPoints/OpenPoints_", indice, datasetName);
 	status = H5LTget_dataset_info(file_id,datasetName,dims,NULL,NULL);
 	if (status == -1) return false;
 	numCapas = dims[0];
@@ -113,7 +111,7 @@ bool MohidResults::CargarResultado(char* archH5, int indice)
 
 
 	// Obtener las dimensiones de VerticalZ
-	DevolverNombreDataset("/Grid/VerticalZ/Vertical_", indice, datasetName);
+	getDatasetName("/Grid/VerticalZ/Vertical_", indice, datasetName);
 	status = H5LTget_dataset_info(file_id,datasetName,dims,NULL,NULL);
 	if (status == -1) return false;
 	if (dims[0] != numCapas+1) return false;
@@ -134,26 +132,26 @@ bool MohidResults::CargarResultado(char* archH5, int indice)
 	}
 
 	// Cargar Velocidades
-	DevolverNombreDataset("/Results/velocity U/velocity U_", indice, datasetName);
-	if (CargarCampo3D(file_id, datasetName, u) != true) {
+	getDatasetName("/Results/velocity U/velocity U_", indice, datasetName);
+	if (loadField3D(file_id, datasetName, u) != true) {
 		return false;
 	}
-	DevolverNombreDataset("/Results/velocity V/velocity V_", indice, datasetName);
-	if (CargarCampo3D(file_id, datasetName, v) != true) {
+	getDatasetName("/Results/velocity V/velocity V_", indice, datasetName);
+	if (loadField3D(file_id, datasetName, v) != true) {
 		return false;
 	}
-	DevolverNombreDataset("/Results/velocity W/velocity W_", indice, datasetName);
-	if (CargarCampo3D(file_id, datasetName, w) != true) {
+	getDatasetName("/Results/velocity W/velocity W_", indice, datasetName);
+	if (loadField3D(file_id, datasetName, w) != true) {
 		return false;
 	}
 
 	// Cargar batimetria, y nivel superficial cmo arrays planos (columna, fila)
-	if (CargarCampo2D(file_id, "/Grid/Bathymetry", batimetria) != true) {
+	if (loadField2D(file_id, "/Grid/Bathymetry", batimetria) != true) {
 		return false;
 	}
 
-	DevolverNombreDataset("/Results/water level/water level_", indice, datasetName);
-	if (CargarCampo2D(file_id, datasetName, nivelSuperficie) != true) {
+	getDatasetName("/Results/water level/water level_", indice, datasetName);
+	if (loadField2D(file_id, datasetName, nivelSuperficie) != true) {
 		return false;
 	}
 
@@ -167,9 +165,9 @@ bool MohidResults::CargarResultado(char* archH5, int indice)
 
 
 //---------------------------------------------------------------------------------
-//----------- AgregaResultado -----------------------------------------------------
+//----------- addResult -----------------------------------------------------------
 //---------------------------------------------------------------------------------
-bool MohidResults::AgregarResultado(char* archH5, int indice)
+bool MohidResults::addResult(char* archH5, int indice)
 {
 	int col, fil, capa;
 
@@ -178,14 +176,14 @@ bool MohidResults::AgregarResultado(char* archH5, int indice)
 	hsize_t     dims[3];			//Dimensiones del array
 	char		datasetName[200];
 
-	DevolverNombreDataset("", indice, datasetName);
+	getDatasetName("", indice, datasetName);
 	cout << "Archivo " << archH5 << " - Paso " << datasetName << " -- Cargando Resultados..." << "\n";
 
 	// Abrir archivo
 	file_id = H5Fopen (archH5, H5F_ACC_RDONLY, H5P_DEFAULT);
 
 	// Obtener las dimensiones de la máscara
-	DevolverNombreDataset("/Grid/OpenPoints/OpenPoints_", indice, datasetName);
+	getDatasetName("/Grid/OpenPoints/OpenPoints_", indice, datasetName);
 	status = H5LTget_dataset_info(file_id,datasetName,dims,NULL,NULL);
 	if (status == -1) return false;
 	if (dims[0] != numCapas) return false;
@@ -193,17 +191,17 @@ bool MohidResults::AgregarResultado(char* archH5, int indice)
 	if (dims[2] != numFil) return false;
 
 	// Cargar Campos de calidad
-	DevolverNombreDataset("/Results/salinity/salinity_", indice, datasetName);
-	hasSalinity = CargarCampo3D(file_id, datasetName, salinity);
+	getDatasetName("/Results/salinity/salinity_", indice, datasetName);
+	hasSalinity = loadField3D(file_id, datasetName, salinity);
 
-	DevolverNombreDataset("/Results/density/density_", indice, datasetName);
-	hasDensity = CargarCampo3D(file_id, datasetName, density);
+	getDatasetName("/Results/density/density_", indice, datasetName);
+	hasDensity = loadField3D(file_id, datasetName, density);
 
-	DevolverNombreDataset("/Results/fecal coliforms/fecal coliforms_", indice, datasetName);
-	hasColiforms = CargarCampo3D(file_id, datasetName, coliforms);
+	getDatasetName("/Results/fecal coliforms/fecal coliforms_", indice, datasetName);
+	hasColiforms = loadField3D(file_id, datasetName, coliforms);
 
-	DevolverNombreDataset("/Results/temperature/temperature_", indice, datasetName);
-	hasTemperature = CargarCampo3D(file_id, datasetName, temperature);
+	getDatasetName("/Results/temperature/temperature_", indice, datasetName);
+	hasTemperature = loadField3D(file_id, datasetName, temperature);
 
 	//close file
 	status = H5Fclose (file_id);
@@ -226,9 +224,9 @@ std::vector<std::string> split(const std::string &s, char delim) {
 }
 
 //---------------------------------------------------------------------------------
-//----------- cargarCamposArchivo -------------------------------------------------
+//----------- loadFieldsFromFieldFile ---------------------------------------------
 //---------------------------------------------------------------------------------
-bool MohidResults::cargarCamposArchivo(char* archH5, char* archCampos, int indice)
+bool MohidResults::loadFieldsFromFieldFile(char* archH5, char* archCampos, int indice)
 {
 	int col, fil, capa;
 
@@ -237,14 +235,14 @@ bool MohidResults::cargarCamposArchivo(char* archH5, char* archCampos, int indic
 	hsize_t     dims[3];			//Dimensiones del array
 	char		datasetName[200];
 
-	DevolverNombreDataset("", indice, datasetName);
+	getDatasetName("", indice, datasetName);
 	cout << "Archivo " << archH5 << " - Paso " << datasetName << " -- Cargando Campos Adicionales..." << "\n";
 
 	// Abrir archivo
 	file_id = H5Fopen (archH5, H5F_ACC_RDONLY, H5P_DEFAULT);
 
 	// Obtener las dimensiones de la máscara
-	DevolverNombreDataset("/Grid/OpenPoints/OpenPoints_", indice, datasetName);
+	getDatasetName("/Grid/OpenPoints/OpenPoints_", indice, datasetName);
 	status = H5LTget_dataset_info(file_id,datasetName,dims,NULL,NULL);
 	if (status == -1) return false;
 	if (dims[0] != numCapas) return false;
@@ -256,10 +254,10 @@ bool MohidResults::cargarCamposArchivo(char* archH5, char* archCampos, int indic
 	while (iFile.returnNextLine(line)) {
 		std::stringstream sstream;
 		sstream << line << "_";
-		DevolverNombreDataset(sstream.str().data(), indice, datasetName);
+		getDatasetName(sstream.str().data(), indice, datasetName);
 
 		campos.resize(campos.size()+1);
-		bool existe = CargarCampo3D(file_id, datasetName, campos[campos.size()-1]);
+		bool existe = loadField3D(file_id, datasetName, campos[campos.size()-1]);
 		if (existe) {
 			cout << "\tCargado campo: " << line << "\n";
 
@@ -278,9 +276,9 @@ bool MohidResults::cargarCamposArchivo(char* archH5, char* archCampos, int indic
 }
 
 //---------------------------------------------------------------------------------
-//----------- CargarCampo3D -------------------------------------------------------
+//----------- loadField3D ---------------------------------------------------------
 //---------------------------------------------------------------------------------
-bool MohidResults::CargarCampo3D(hid_t	file_id, char* nombreDataset, vector<vector<vector<double> > > &vectorRes)
+bool MohidResults::loadField3D(hid_t	file_id, char* nombreDataset, vector<vector<vector<double> > > &vectorRes)
 {
 	int col, fil, capa;
 	herr_t      status;			//Status de las funciones
@@ -315,9 +313,9 @@ bool MohidResults::CargarCampo3D(hid_t	file_id, char* nombreDataset, vector<vect
 }
 
 //---------------------------------------------------------------------------------
-//----------- CargarCampo2D -------------------------------------------------------
+//----------- loadField2D ---------------------------------------------------------
 //---------------------------------------------------------------------------------
-bool MohidResults::CargarCampo2D(hid_t	file_id, char* nombreDataset, vector<vector<double> > &vectorRes)
+bool MohidResults::loadField2D(hid_t	file_id, char* nombreDataset, vector<vector<double> > &vectorRes)
 {
 	int col, fil;
 	herr_t      status;		//Status de las funciones
@@ -348,9 +346,9 @@ bool MohidResults::CargarCampo2D(hid_t	file_id, char* nombreDataset, vector<vect
 }
 
 //---------------------------------------------------------------------------------
-//----------- cargarMapa ----------------------------------------------------------
+//----------- loadMap -------------------------------------------------------------
 //---------------------------------------------------------------------------------
-bool MohidResults::cargarMapa( char* nombreMapa )
+bool MohidResults::loadMap( char* nombreMapa )
 {
 	InputFile aFile( nombreMapa );
 
@@ -376,9 +374,9 @@ bool MohidResults::cargarMapa( char* nombreMapa )
 }
 
 //---------------------------------------------------------------------------------
-//----------- ConvertirResultadoAVTK ----------------------------------------------
+//----------- convertResultsToVTK -------------------------------------------------
 //---------------------------------------------------------------------------------
-bool MohidResults::ConvertirResultadoAVTK(void)
+bool MohidResults::convertResultsToVTK(void)
 {
 	int	fil, col, capa;
 
@@ -407,14 +405,14 @@ bool MohidResults::ConvertirResultadoAVTK(void)
 
 					//Crear el elemento y los Nodos si hace falta
 					elemento.resize(elemento.size()+1);
-					elemento[numElementos].nodo[0] = CrearNodo(capa, col, fil);
-					elemento[numElementos].nodo[1] = CrearNodo(capa, col+1, fil);
-					elemento[numElementos].nodo[2] = CrearNodo(capa, col+1, fil+1);
-					elemento[numElementos].nodo[3] = CrearNodo(capa, col, fil+1);
-					elemento[numElementos].nodo[4] = CrearNodo(capa+1, col, fil);
-					elemento[numElementos].nodo[5] = CrearNodo(capa+1, col+1, fil);
-					elemento[numElementos].nodo[6] = CrearNodo(capa+1, col+1, fil+1);
-					elemento[numElementos].nodo[7] = CrearNodo(capa+1, col, fil+1);
+					elemento[numElementos].nodo[0] = createNode(capa, col, fil);
+					elemento[numElementos].nodo[1] = createNode(capa, col+1, fil);
+					elemento[numElementos].nodo[2] = createNode(capa, col+1, fil+1);
+					elemento[numElementos].nodo[3] = createNode(capa, col, fil+1);
+					elemento[numElementos].nodo[4] = createNode(capa+1, col, fil);
+					elemento[numElementos].nodo[5] = createNode(capa+1, col+1, fil);
+					elemento[numElementos].nodo[6] = createNode(capa+1, col+1, fil+1);
+					elemento[numElementos].nodo[7] = createNode(capa+1, col, fil+1);
 					elemento[numElementos].numNodos = 8;
 					elemento[numElementos].col = col;
 					elemento[numElementos].fil = fil;
@@ -429,9 +427,9 @@ bool MohidResults::ConvertirResultadoAVTK(void)
 }
 
 //---------------------------------------------------------------------------------
-//----------- CrearNodo -----------------------------------------------------------
+//----------- createNode ----------------------------------------------------------
 //---------------------------------------------------------------------------------
-int MohidResults::CrearNodo(int capa, int col, int fil)
+int MohidResults::createNode(int capa, int col, int fil)
 {
 	int capaMask;
 	if (capa < numCapas) {
@@ -487,9 +485,9 @@ int MohidResults::CrearNodo(int capa, int col, int fil)
 }
 
 //---------------------------------------------------------------------------------
-//----------- EscribirResultadoVTK ------------------------------------------------
+//----------- writeResultsVTK -----------------------------------------------------
 //---------------------------------------------------------------------------------
-bool MohidResults::EscribirResultadoVTK(char* archVTK, bool EscribirComo2D)
+bool MohidResults::writeResultsVTK(char* archVTK, bool EscribirComo2D)
 {
 	int					i;
 	vector<double>		valorNodo;
@@ -619,7 +617,7 @@ bool MohidResults::EscribirResultadoVTK(char* archVTK, bool EscribirComo2D)
 	// Valores en Nodos --------------------------------------
 	vtk << "POINT_DATA " << numNodos << "\n";
 	//Valores de batimetria
-	CalcularValoresEnNodos2D(batimetria, valorNodo);
+	calculateNodeValues2D(batimetria, valorNodo);
 	vtk << "SCALARS " << "batimetria" << " float" << "\n";
 	vtk << "LOOKUP_TABLE default" << "\n";
 	for (i=0; i<numNodos; i++) {
@@ -629,7 +627,7 @@ bool MohidResults::EscribirResultadoVTK(char* archVTK, bool EscribirComo2D)
 	vtk << "\n";
 
 	//Valores de nivel de agua
-	CalcularValoresEnNodos2D(nivelSuperficie, valorNodo);
+	calculateNodeValues2D(nivelSuperficie, valorNodo);
 	vtk << "SCALARS " << "NivelSuperficie" << " float" << "\n";
 	vtk << "LOOKUP_TABLE default" << "\n";
 	for (i=0; i<numNodos; i++) {
@@ -639,9 +637,9 @@ bool MohidResults::EscribirResultadoVTK(char* archVTK, bool EscribirComo2D)
 	vtk << "\n";
 
 	//Valores de Velocidad
-	CalcularValoresEnNodos(u, valorNodo);
-	CalcularValoresEnNodos(v, valorNodo2);
-	CalcularValoresEnNodos(w, valorNodo3);
+	calculateNodeValues(u, valorNodo);
+	calculateNodeValues(v, valorNodo2);
+	calculateNodeValues(w, valorNodo3);
 	vtk << "VECTORS " << "vel" << " float" << "\n";
 	for (i=0; i<numNodos; i++) {
 		vtk << valorNodo[i] << " " << valorNodo2[i] << " " << valorNodo3[i] << "\n";
@@ -656,9 +654,9 @@ bool MohidResults::EscribirResultadoVTK(char* archVTK, bool EscribirComo2D)
 }
 
 //---------------------------------------------------------------------------------
-//----------- EscribirResultadoVTKBinario -----------------------------------------
+//----------- writeResultsVTKBinary -----------------------------------------------
 //---------------------------------------------------------------------------------
-bool MohidResults::EscribirResultadoVTKBinario(char* archVTK, bool EscribirComo2D)
+bool MohidResults::writeResultsVTKBinary(char* archVTK, bool EscribirComo2D)
 {
 	int					i,j,datoInt;
 	float				dato;
@@ -793,7 +791,7 @@ bool MohidResults::EscribirResultadoVTKBinario(char* archVTK, bool EscribirComo2
 	// Valores en Nodos --------------------------------------
 	vtk << "POINT_DATA " << numNodos << "\n";
 	//Valores de batimetria
-	CalcularValoresEnNodos2D(batimetria, valorNodo);
+	calculateNodeValues2D(batimetria, valorNodo);
 	vtk << "SCALARS " << "batimetria" << " float" << "\n";
 	vtk << "LOOKUP_TABLE default" << "\n";
 	for (i=0; i<numNodos; i++) {
@@ -807,7 +805,7 @@ bool MohidResults::EscribirResultadoVTKBinario(char* archVTK, bool EscribirComo2
 	vtk << "\n";
 
 	//Valores de nivel de agua
-	CalcularValoresEnNodos2D(nivelSuperficie, valorNodo);
+	calculateNodeValues2D(nivelSuperficie, valorNodo);
 	vtk << "SCALARS " << "NivelSuperficie" << " float" << "\n";
 	vtk << "LOOKUP_TABLE default" << "\n";
 	for (i=0; i<numNodos; i++) {
@@ -822,7 +820,7 @@ bool MohidResults::EscribirResultadoVTKBinario(char* archVTK, bool EscribirComo2
 
 	//Valores de salinidad
 	if (hasSalinity) {
-		CalcularValoresEnNodos(salinity, valorNodo);
+		calculateNodeValues(salinity, valorNodo);
 		vtk << "SCALARS " << "salinity" << " float" << "\n";
 		vtk << "LOOKUP_TABLE default" << "\n";
 		for (i=0; i<numNodos; i++) {
@@ -837,9 +835,9 @@ bool MohidResults::EscribirResultadoVTKBinario(char* archVTK, bool EscribirComo2
 	}
 
 	//Valores de Velocidad
-	CalcularValoresEnNodos(u, valorNodo);
-	CalcularValoresEnNodos(v, valorNodo2);
-	CalcularValoresEnNodos(w, valorNodo3);
+	calculateNodeValues(u, valorNodo);
+	calculateNodeValues(v, valorNodo2);
+	calculateNodeValues(w, valorNodo3);
 	vtk << "VECTORS " << "vel" << " float" << "\n";
 	for (i=0; i<numNodos; i++) {
 		//vtk << valorNodo[i] << " " << valorNodo2[i] << " " << valorNodo3[i] << "\n";
@@ -870,9 +868,9 @@ bool MohidResults::EscribirResultadoVTKBinario(char* archVTK, bool EscribirComo2
 
 
 //---------------------------------------------------------------------------------
-//----------- EscribirResultadoGIS ------------------------------------------------
+//----------- writeResultsASC -----------------------------------------------------
 //---------------------------------------------------------------------------------
-bool MohidResults::EscribirResultadoGIS(int indice)
+bool MohidResults::writeResultsASC(int indice)
 {
 	char				nombreArchivo[500];
 
@@ -886,7 +884,7 @@ bool MohidResults::EscribirResultadoGIS(int indice)
 
 	cout << "    Escribiendo los resultados en formato del GIS..." << "\n";
 	{
-		DevolverNombreDataset("supLibre_", indice, nombreArchivo);
+		getDatasetName("supLibre_", indice, nombreArchivo);
 		strcat ( nombreArchivo, ".asc");
 
 		cout << "\t\tEscribiendo " << nombreArchivo << "\n";
@@ -912,7 +910,7 @@ bool MohidResults::EscribirResultadoGIS(int indice)
 		surfer.close();
 	}
 	{
-		DevolverNombreDataset("nivelFondo_", indice, nombreArchivo);
+		getDatasetName("nivelFondo_", indice, nombreArchivo);
 		strcat ( nombreArchivo, ".asc");
 
 		cout << "\t\tEscribiendo " << nombreArchivo << "\n";
@@ -938,7 +936,7 @@ bool MohidResults::EscribirResultadoGIS(int indice)
 		surfer.close();
 	}
 	{
-		DevolverNombreDataset("moduloVel_", indice, nombreArchivo);
+		getDatasetName("moduloVel_", indice, nombreArchivo);
 		strcat ( nombreArchivo, ".asc");
 
 		cout << "\t\tEscribiendo " << nombreArchivo << "\n";
@@ -979,7 +977,7 @@ bool MohidResults::EscribirResultadoGIS(int indice)
 	}
 
 	for (int nc=0; nc<listaCampos.size(); nc++) {
-		DevolverNombreDataset(listaCampos[nc].data(), indice, nombreArchivo);
+		getDatasetName(listaCampos[nc].data(), indice, nombreArchivo);
 		strcat ( nombreArchivo, ".asc");
 
 		cout << "\t\tEscribiendo " << nombreArchivo << "\n";
@@ -1019,9 +1017,9 @@ bool MohidResults::EscribirResultadoGIS(int indice)
 }
 
 //---------------------------------------------------------------------------------
-//----------- CalcularValoresEnNodos ----------------------------------------------
+//----------- calculateNodeValues -------------------------------------------------
 //---------------------------------------------------------------------------------
-void MohidResults::CalcularValoresEnNodos(vector<vector<vector<double> > > &valElemento, vector<double> &valNodo)
+void MohidResults::calculateNodeValues(vector<vector<vector<double> > > &valElemento, vector<double> &valNodo)
 {
 	int					i, j;
 	vector<int>			numValNodo;
@@ -1048,9 +1046,9 @@ void MohidResults::CalcularValoresEnNodos(vector<vector<vector<double> > > &valE
 }
 
 //---------------------------------------------------------------------------------
-//----------- CalcularValoresEnNodos2D --------------------------------------------
+//----------- calculateNodeValues2D -----------------------------------------------
 //---------------------------------------------------------------------------------
-void MohidResults::CalcularValoresEnNodos2D(vector<vector<double> > &valElemento, vector<double> &valNodo)
+void MohidResults::calculateNodeValues2D(vector<vector<double> > &valElemento, vector<double> &valNodo)
 {
 	int					i, j;
 	vector<int>			numValNodo;
@@ -1077,9 +1075,9 @@ void MohidResults::CalcularValoresEnNodos2D(vector<vector<double> > &valElemento
 }
 
 //---------------------------------------------------------------------------------
-//----------- Devolver --------------------------------------------
+//----------- getDatasetName ------------------------------------------------------
 //---------------------------------------------------------------------------------
-void MohidResults::DevolverNombreDataset(const char *nombreBase, int indice, char *nombreFinal)
+void MohidResults::getDatasetName(const char *nombreBase, int indice, char *nombreFinal)
 {
 	char			num[10];
 

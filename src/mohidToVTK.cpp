@@ -27,7 +27,7 @@ int main(int argc, char* argv[])
 	int							pasoInicial, pasoFinal, cadaCuantos;
 	int 						inicio, fin;
 	bool						terminar = false;
-	bool						cargarMapa = false;
+	bool						loadMap = false;
 	bool						archivoCampos = false;
 	double						offset = 0;
 
@@ -41,7 +41,7 @@ int main(int argc, char* argv[])
 	for (i=1; i < argc; i++) {
 		if (argv[i][0] == '-' && argv[i][1] == 'm') {
 			strcpy(nombreArchivoMapa, argv[i+1]);
-			cargarMapa = true;
+			loadMap = true;
 			i++;
 			continue;
 		}
@@ -125,33 +125,33 @@ int main(int argc, char* argv[])
 	while (existe && indice <= pasoFinal) {
 		hbRes = new MohidResults(offset);
 
-		existe = hbRes->CargarResultado(nombreArchivoHDF5, indice);
+		existe = hbRes->loadResult(nombreArchivoHDF5, indice);
 		if (existe) {
 			if (numArchivos == 2) {
 				if (archivoCampos) {
-					existe = hbRes->cargarCamposArchivo( nombreArchivoHDF5_2, nombreArchivoCampos, indice);
+					existe = hbRes->loadFieldsFromFieldFile( nombreArchivoHDF5_2, nombreArchivoCampos, indice);
 				} else {
-					existe = hbRes->AgregarResultado(nombreArchivoHDF5_2, indice);
+					existe = hbRes->addResult(nombreArchivoHDF5_2, indice);
 				}
 
 				if (existe == false) break;
 			}
 
-			if (cargarMapa) {
-				hbRes->cargarMapa( nombreArchivoMapa );
+			if (loadMap) {
+				hbRes->loadMap( nombreArchivoMapa );
 			}
 
 			//Convertir los resultados a VTK
-			hbRes->ConvertirResultadoAVTK();
+			hbRes->convertResultsToVTK();
 
 			//Escribir el archivo VTK
-			hbRes->DevolverNombreDataset("Hydro_", indice, nombreArchivo);
+			hbRes->getDatasetName("Hydro_", indice, nombreArchivo);
 			strcat(nombreArchivo, ".vtk");
-			hbRes->EscribirResultadoVTK(nombreArchivo,false);
+			hbRes->writeResultsVTK(nombreArchivo,false);
 
-			hbRes->DevolverNombreDataset("Hydro2D_", indice, nombreArchivo);
+			hbRes->getDatasetName("Hydro2D_", indice, nombreArchivo);
 			strcat(nombreArchivo, ".vtk");
-			hbRes->EscribirResultadoVTK(nombreArchivo,true);
+			hbRes->writeResultsVTK(nombreArchivo,true);
 
 			hbRes->EscribirResultadoGIS(indice);
 		}
